@@ -1,6 +1,153 @@
 #include "header.h"
 
+#include <cstdlib>
+#include <iostream>
 
+
+#define ASSERT(X) if(!(X)) { std::cout << #X << std::endl; std::abort(); }
+
+/******************************************************************************
+ * MPEG Version Class
+ *****************************************************************************/
+CMPEGVer::CMPEGVer()			{ init(0x01 /*invalid (reserved) mask*/); }
+CMPEGVer::CMPEGVer(uint f_mask)	{ init(f_mask); }
+
+bool CMPEGVer::isValid()	const { return m_v2 || !m_v25; }
+bool CMPEGVer::isV2()		const { return m_v2; }
+
+uint CMPEGVer::getIndex() const { return (m_v2 ? (m_v25 ? 2 : 1) : 0); }
+
+void CMPEGVer::init(uint f_mask)
+{
+	m_v2	= (f_mask == 0x02) || (f_mask == 0x00);
+	m_v25	= (f_mask == 0x00) || (f_mask == 0x01);
+}
+
+/******************************************************************************
+ * Public Section
+ *****************************************************************************/
+// Basic routines
+CMPEGHeader::CMPEGHeader(uint f_header):
+	m_header(f_header),
+	m_valid(false),
+	m_layer(0),
+	m_bitrate(0),
+	m_frequency(0)
+{
+	m_valid = isValidInternal();
+	if(m_valid)
+	{
+		m_mpeg = calcMpegVersion();
+		m_layer = calcLayer();
+		m_bitrate = calcBitrate(m_mpeg, m_layer);
+		m_frequency = calcFrequency(m_mpeg);
+	}
+}
+
+bool CMPEGHeader::isValid() const { return m_valid; }
+
+const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_mpeg;		}
+uint			CMPEGHeader::getLayer()			const { return m_layer;		}
+uint			CMPEGHeader::getBitrate()		const { return m_bitrate;	}
+uint			CMPEGHeader::getFrequency()		const { return m_frequency;	}
+
+bool CMPEGHeader::isProtected()		const { return !((m_header >> 8) & 0x01); }
+bool CMPEGHeader::isPadded()		const { return ((m_header >> 17) & 0x01); }
+bool CMPEGHeader::isPrivate()		const { return ((m_header >> 16) & 0x01); }
+bool CMPEGHeader::isCopyrighted()	const { return ((m_header >> 27) & 0x01); }
+bool CMPEGHeader::isOriginal()		const { return ((m_header >> 26) & 0x01); }
+
+EMPHASIS CMPEGHeader::getEmphasis() const
+{
+	ASSERT(((m_header >> 24) & 0x03) != 0x02);
+
+	switch((m_header >> 24) & 0x03)
+	{
+		case 0x01: return EMPHASIS_50_15;
+		case 0x03: return EMPHASIS_CCIT_J17;
+		case 0x00:
+
+		default:
+			return EMPHASIS_NONE;
+	}
+}
+
+CHANNEL_MODE CMPEGHeader::getChannelMode()	const
+{
+	return (CHANNEL_MODE)((m_header >> 30) & 0x03);
+}
+
+// Complex routines
+uint CMPEGHeader::getFrameSize() const
+{
+	if(!m_valid)
+	{
+		ASSERT(!"Invalid frame");
+		return 0;
+	}
+
+	// Samples Per Frame / 8
+	static const uint SPF8[][3] =
+	{
+		// 12 must be multiplied by 4 because of slot size
+		{12, 144, 144},
+		{12, 144,  72}
+	};
+	static const uint slotSize[] = {4, 1, 1};
+
+	return ((SPF8[m_mpeg.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
+};
+
+
+float CMPEGHeader::getFrameLength() const
+{
+	if(!m_valid)
+	{
+		ASSERT(!"Invalid frame");
+		return 0;
+	}
+
+	static const float SPF[][3] =
+	{
+		{384.0f, 1152.0f, 1152.0f},
+		{384.0f, 1152.0f,  576.0f}
+	};
+
+	return SPF[m_mpeg.isV2()][m_layer - 1] / m_frequency;
+}
+
+
+uint CMPEGHeader::getNextFrame() const
+{
+	ASSERT(!isCopyrighted());
+	return (/*sizeof(m_header) + */getFrameSize() + isCopyrighted() * sizeof(short)/* + getSideInfoSize()*/);
+}
+
+// version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
+static const uint HeaderMask = 0xC30C1E00;
+bool CMPEGHeader::operator==(const CMPEGHeader& f_header) const
+{
+	return ((m_header & HeaderMask) == (f_header.m_header & HeaderMask));
+}
+
+bool CMPEGHeader::operator!=(const CMPEGHeader& f_header) const
+{
+	return !(f_header == *this);
+}
+
+/******************************************************************************
+ * Private Section
+ *****************************************************************************/
+// Basic routines
+CMPEGVer CMPEGHeader::calcMpegVersion() const { return CMPEGVer((m_header >> 11) & 0x3); }
+
+uint CMPEGHeader::calcLayer() const
+{
+	ASSERT((m_header >> 9) & 0x03);
+	return (4 - ((m_header >> 9) & 0x03));
+}
+
+// Complex routines
 bool CMPEGHeader::isValidInternal() const
 {
 	if((m_header & 0xE0FF) != 0xE0FF)
@@ -43,16 +190,17 @@ bool CMPEGHeader::isValidInternal() const
 	return true;
 }
 
-unsigned int CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, unsigned int f_layer) const
+
+uint CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, uint f_layer) const
 {
 	ASSERT(f_ver.isValid() && f_layer && (f_layer < 4));
 
-	static const unsigned int index[][3] =
+	static const uint index[][3] =
 	{
 		{0, 1, 2},
 		{3, 4, 4}
 	};
-	static const unsigned int bitrate[][16] =
+	static const uint bitrate[][16] =
 	{
 		{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
 		{0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
@@ -65,11 +213,12 @@ unsigned int CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, unsigned int f_laye
 				  [ (m_header >> 20) & 0x0F ] * 1000;
 }
 
-unsigned int CMPEGHeader::calcFrequency(const CMPEGVer& f_ver) const
+
+uint CMPEGHeader::calcFrequency(const CMPEGVer& f_ver) const
 {
 	ASSERT(f_ver.isValid());
 
-	static const unsigned int frequency[][3] =
+	static const uint frequency[][3] =
 	{
 		{44100, 48000, 32000},
 		{22050, 24000, 16000},
@@ -80,9 +229,10 @@ unsigned int CMPEGHeader::calcFrequency(const CMPEGVer& f_ver) const
 	return frequency[f_ver.getIndex()][(m_header >> 18) & 0x03];
 }
 
-unsigned int CMPEGHeader::getSideInfoSize() const
+
+uint CMPEGHeader::getSideInfoSize() const
 {
-	static const unsigned int size[][2] =
+	static const uint size[][2] =
 	{
 		{32, 17},
 		{17,  9}
@@ -92,55 +242,3 @@ unsigned int CMPEGHeader::getSideInfoSize() const
 	return (m_valid && (m_layer == 3)) ? size[m_mpeg.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
 }
 
-// ====================================================================================================================
-CMPEGHeader::EMPHASIS CMPEGHeader::getEmphasis() const
-{
-	ASSERT(((m_header >> 24) & 0x03) != 0x02);
-
-	switch((m_header >> 24) & 0x03)
-	{
-		case 0x01: return EMPHASIS_50_15;
-		case 0x03: return EMPHASIS_CCIT_J17;
-		case 0x00:
-
-		default:
-			return EMPHASIS_NONE;
-	}
-}
-
-unsigned int CMPEGHeader::getFrameSize() const
-{
-	if(!m_valid)
-	{
-		ASSERT(!"Invalid frame");
-		return 0;
-	}
-
-	// Samples Per Frame / 8
-	static const unsigned int SPF8[][3] =
-	{
-		// 12 must be multiplied by 4 because of slot size
-		{12, 144, 144},
-		{12, 144,  72}
-	};
-	static const unsigned int slotSize[] = {4, 1, 1};
-
-	return ((SPF8[m_mpeg.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
-};
-
-float CMPEGHeader::getFrameLength() const
-{
-	if(!m_valid)
-	{
-		ASSERT(!"Invalid frame");
-		return 0;
-	}
-
-	static const float SPF[][3] =
-	{
-		{384.0f, 1152.0f, 1152.0f},
-		{384.0f, 1152.0f,  576.0f}
-	};
-
-	return SPF[m_mpeg.isV2()][m_layer - 1] / m_frequency;
-}
