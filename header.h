@@ -1,9 +1,9 @@
 #ifndef _MPEG_HEADER_H_
 #define _MPEG_HEADER_H_
 
+#pragma once
 
-typedef unsigned int uint;
-
+#include "common.h"
 
 // Declarations
 enum CHANNEL_MODE

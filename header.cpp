@@ -1,11 +1,5 @@
 #include "header.h"
 
-#include <cstdlib>
-#include <iostream>
-
-
-#define ASSERT(X) if(!(X)) { std::cout << #X << std::endl; std::abort(); }
-
 /******************************************************************************
  * MPEG Version Class
  *****************************************************************************/
