@@ -19,18 +19,23 @@ LIBS =
 # with the .o suffix
 #OBJS = $(SRCS:.c=.o)
 
-TARGET = header
+TARGET = mpeg
+TARGET_HEADER = header
+TARGET_STREAM = stream
 TEST = test
 
 # the first target is executed by default
 default: $(TARGET)
 	@echo  \"$(TARGET)\" generated.
 
-$(TARGET): $(TARGET).o
-	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET).o
+$(TARGET): $(TARGET_HEADER).o $(TARGET_STREAM).o
+	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET_HEADER).o $(TARGET_STREAM).o
 
-$(TARGET).o: $(TARGET).cpp $(TARGET).h
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET).cpp $(LFLAGS) $(LIBS)
+$(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
+
+$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h
+	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
 
 test: $(TEST).cpp $(TARGET).a
 	$(CC) $(CFLAGS) -o $(TEST) $(TEST).cpp $(TARGET).a
