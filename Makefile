@@ -37,4 +37,4 @@ test: $(TEST).cpp $(TARGET).a
 	@echo  \"$(TEST)\" generated.
 
 clean: 
-	$(RM) *.o *~ $(TARGET).a
+	$(RM) *.o *~ $(TARGET).a $(TEST)
