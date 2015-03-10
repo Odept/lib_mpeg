@@ -20,16 +20,21 @@ LIBS =
 #OBJS = $(SRCS:.c=.o)
 
 TARGET = header
+TEST = test
 
 # the first target is executed by default
 default: $(TARGET)
-	@echo  "$(TARGET)" generated
+	@echo  \"$(TARGET)\" generated.
 
 $(TARGET): $(TARGET).o
 	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET).o
 
 $(TARGET).o: $(TARGET).cpp $(TARGET).h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET).cpp $(LFLAGS) $(LIBS)
+
+test: $(TEST).cpp $(TARGET).a
+	$(CC) $(CFLAGS) -o $(TEST) $(TEST).cpp $(TARGET).a
+	@echo  \"$(TEST)\" generated.
 
 clean: 
 	$(RM) *.o *~ $(TARGET).a
