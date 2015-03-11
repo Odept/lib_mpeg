@@ -21,7 +21,7 @@ enum EMPHASIS
 	EMPHASIS_CCIT_J17
 };
 
-// MPEG version
+// MPEG Version
 class CMPEGVer
 {
 public:
@@ -41,7 +41,7 @@ private:
 	bool m_v25;
 };
 
-// MPEG header
+// MPEG Header
 class CMPEGHeader
 {
 public:
@@ -98,6 +98,31 @@ private:
 	uint m_layer;
 	uint m_bitrate;
 	uint m_frequency;
+};
+
+// Xing Header
+class CXingHeader
+{
+public:
+	CXingHeader(const unsigned char* f_data);
+
+	bool isValid()			const;
+
+	uint getFrameCount()	const;
+	uint getByteCount()		const;
+	uint getTOCsOffset()	const;
+	uint getQuality()		const;
+
+private:
+	CXingHeader();
+
+private:
+	bool m_valid;
+
+	uint m_frames;
+	uint m_bytes;
+	uint m_TOCsOffset;
+	uint m_quality;
 };
 
 #endif	// _MPEG_HEADER_H_

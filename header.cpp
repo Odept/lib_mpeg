@@ -1,7 +1,7 @@
 #include "header.h"
 
 /******************************************************************************
- * MPEG Version Class
+ * MPEG Version
  *****************************************************************************/
 CMPEGVer::CMPEGVer()			{ init(0x01 /*invalid (reserved) mask*/); }
 CMPEGVer::CMPEGVer(uint f_mask)	{ init(f_mask); }
@@ -18,6 +18,8 @@ void CMPEGVer::init(uint f_mask)
 }
 
 /******************************************************************************
+ * MPEG Header
+ *
  * Public Section
  *****************************************************************************/
 // Basic routines
@@ -90,7 +92,7 @@ uint CMPEGHeader::getFrameSize() const
 	static const uint slotSize[] = {4, 1, 1};
 
 	return ((SPF8[m_mpeg.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
-};
+}
 
 
 float CMPEGHeader::getFrameLength() const
@@ -235,4 +237,55 @@ uint CMPEGHeader::getSideInfoSize() const
 	ASSERT(m_valid);
 	return (m_valid && (m_layer == 3)) ? size[m_mpeg.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
 }
+
+/******************************************************************************
+ * Xing Header
+ *****************************************************************************/
+CXingHeader::CXingHeader(const unsigned char* f_data):
+	m_valid(false),
+	m_frames(0),
+	m_bytes(0),
+	m_TOCsOffset(0),
+	m_quality(0)
+{
+	const uint* pData = (const uint*)f_data;
+
+	uint id = *pData;
+	if(id != 'gniX' && id != 'ofnI')
+		return;
+
+	m_valid = true;
+	pData++;
+
+	uint mask = *pData;
+	pData++;
+
+	if(mask & 0x0001)
+	{
+		m_frames = *pData;
+		pData++;
+	}
+	if(mask & 0x0002)
+	{
+		m_bytes = *pData;
+		pData++;
+	}
+	if(mask & 0x0004)
+	{
+		m_TOCsOffset = /*(uint)*/((const unsigned char*)pData - f_data);
+		pData = (uint*)((unsigned char*)pData + 100);
+	}
+	if(mask & 0x0008)
+	{
+		m_quality = *pData;
+		//pData++;
+	}
+}
+
+bool CXingHeader::isValid()			const { return m_valid;      }
+
+uint CXingHeader::getFrameCount()	const { return m_frames;     }
+uint CXingHeader::getByteCount()	const { return m_bytes;      }
+uint CXingHeader::getTOCsOffset()	const { return m_TOCsOffset; }
+uint CXingHeader::getQuality()		const { return m_quality;    }
 
