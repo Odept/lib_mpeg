@@ -6,6 +6,8 @@
 #include "common.h"
 
 // Declarations
+static const uint HeaderSize = 4;
+
 enum CHANNEL_MODE
 {
 	CHANNEL_STEREO = 0,

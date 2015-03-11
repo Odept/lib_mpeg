@@ -5,13 +5,13 @@
 
 #include "common.h"
 
-#include <vector>
+//#include <vector>
 
 
 class CMPEGStream
 {
 // Declarations
-private:
+/*private:
 	struct SFrameInfo
 	{
 		SFrameInfo(uint f_offset, uint f_size, float f_length):
@@ -24,6 +24,7 @@ private:
 		uint size;
 		float		 length;
 	};
+//*/
 
 // Routines
 public:
@@ -54,7 +55,8 @@ private:
 	float m_length;
 	uint m_abr;
 
-	std::vector<SFrameInfo> m_frames;
+	//std::vector<SFrameInfo> m_frames;
+	uint m_frames;
 };
 
 #endif	// _MPEG_STREAM_H_
