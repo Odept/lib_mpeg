@@ -29,22 +29,22 @@ default: $(TARGET).a
 
 $(TARGET).a: $(TARGET_HEADER).o $(TARGET_STREAM).o
 	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET_HEADER).o $(TARGET_STREAM).o
-	@echo  \"$(TARGET)\" generated.
+	@echo "###" \"$(TARGET)\" generated
 
 # Header
 $(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
-	@echo  \"$(TARGET_HEADER)\" generated.
+	@echo "###" \"$(TARGET_HEADER)\" generated
 
 # Stream
 $(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
-	@echo  \"$(TARGET_STREAM)\" generated.
+	@echo "###" \"$(TARGET_STREAM)\" generated
 
 # Test
 test: $(TEST).cpp $(TARGET).a
 	$(CC) $(CFLAGS) -o $(TEST) $(TEST).cpp $(TARGET).a
-	@echo  \"$(TEST)\" generated.
+	@echo "###" \"$(TEST)\" generated
 
 clean: 
 	$(RM) *.o *~ $(TARGET).a $(TEST)
