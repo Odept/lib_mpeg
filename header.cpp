@@ -73,6 +73,11 @@ CHANNEL_MODE CMPEGHeader::getChannelMode()	const
 	return (CHANNEL_MODE)((m_header >> 30) & 0x03);
 }
 
+uint CMPEGHeader::getFrameDataOffset() const
+{
+	return HeaderSize + getSideInfoSize();
+}
+
 // Complex routines
 uint CMPEGHeader::getFrameSize() const
 {

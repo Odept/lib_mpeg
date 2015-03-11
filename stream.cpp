@@ -79,6 +79,14 @@ bool CMPEGStream::parse()
 
 	const CMPEGHeader first( *(const uint*)(m_data + m_first_header_offset) );
 
+	// Handle Xing-header frame
+	uint frameDataOffset = m_first_header_offset + first.getFrameDataOffset();
+	if(frameDataOffset + first.getFrameSize() < m_size)
+	{
+		const CXingHeader xing(m_data + frameDataOffset);
+		if(xing.isValid())
+			m_first_header_offset += first.getNextFrame();
+	}
 
 	for(uint offset = m_first_header_offset, next; offset < m_size; offset += next)
 	{
