@@ -256,7 +256,7 @@ CXingHeader::CXingHeader(const unsigned char* f_data):
 	const uint* pData = (const uint*)f_data;
 
 	uint id = *pData;
-	if(id != 'gniX' && id != 'ofnI')
+	if(id != FOUR_CC('X','i','n','g') && id != FOUR_CC('I','n','f','o'))
 		return;
 
 	m_valid = true;

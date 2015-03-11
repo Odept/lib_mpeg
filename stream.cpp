@@ -61,7 +61,7 @@ CMPEGStream::CMPEGStream(const unsigned char* f_data, uint f_size):
 	m_abr(0),
 	m_frames(0)
 {
-	ASSERT(m_size < (1 << (sizeof(uint) * 8 - 1)));
+	ASSERT(m_size < (uint)(1 << (sizeof(uint) * 8 - 1)));
 }
 
 

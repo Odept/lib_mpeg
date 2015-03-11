@@ -3,6 +3,8 @@
 #include "header.h"
 #include "stream.h"
 
+#include <stdio.h>
+
 
 void test_header(uint f_val)
 {
