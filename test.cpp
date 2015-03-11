@@ -84,8 +84,9 @@ void test_file(const char* f_path)
 
 int main(int, char**)
 {
-	//test_header(0x44e0fbff);
 	test_file("test.mp3");
+	std::cout << "================" << std::endl;
+	test_header(0x44e0fbff);
 
 	return 0;
 }
