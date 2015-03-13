@@ -3,16 +3,16 @@
 
 #pragma once
 
-#include "common.h"
-
 //#include <vector>
 
 
 class CMPEGStream
 {
 // Declarations
-/*private:
-	struct SFrameInfo
+private:
+	typedef unsigned int uint;
+
+/*	struct SFrameInfo
 	{
 		SFrameInfo(uint f_offset, uint f_size, float f_length):
 			offset(f_offset),

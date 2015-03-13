@@ -1,5 +1,7 @@
 #include "header.h"
 
+#include "common.h"
+
 
 #define FOUR_CC(A, B, C, D) \
 	(( (A) & 0xFF)			|\
@@ -82,7 +84,7 @@ CHANNEL_MODE CMPEGHeader::getChannelMode()	const
 
 uint CMPEGHeader::getFrameDataOffset() const
 {
-	return HeaderSize + getSideInfoSize();
+	return Size + getSideInfoSize();
 }
 
 // Complex routines

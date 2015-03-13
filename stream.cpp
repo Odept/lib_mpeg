@@ -1,8 +1,12 @@
-// check xing / vbri consistency
+// check vbri consistency
 // mp3 padding fix
 
 #include "stream.h"
+
+#include "common.h"
 #include "header.h"
+
+#include <new> // nothrow
 
 /******************************************************************************
  * Static Section
@@ -144,7 +148,7 @@ uint CMPEGStream::calcFirstHeaderOffset() const
 uint CMPEGStream::findHeader(const unsigned char* f_data, uint f_size) const
 {
 	uint i;
-	uint limit = f_size - HeaderSize;
+	uint limit = f_size - CMPEGHeader::Size;
 
 	for(i = 0; i < limit; i++)
 	{

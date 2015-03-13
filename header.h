@@ -3,11 +3,7 @@
 
 #pragma once
 
-#include "common.h"
-
 // Declarations
-static const uint HeaderSize = 4;
-
 enum CHANNEL_MODE
 {
 	CHANNEL_STEREO = 0,
@@ -26,6 +22,9 @@ enum EMPHASIS
 // MPEG Version
 class CMPEGVer
 {
+private:
+	typedef unsigned int uint;
+
 public:
 	CMPEGVer();
 	CMPEGVer(uint f_mask);
@@ -46,6 +45,14 @@ private:
 // MPEG Header
 class CMPEGHeader
 {
+private:
+	typedef unsigned int uint;
+
+// Public Constatnts
+public:
+	static const uint Size = 4;
+
+// Interfaces
 public:
 	CMPEGHeader(uint f_header);
 
@@ -106,6 +113,9 @@ private:
 // Xing Header
 class CXingHeader
 {
+private:
+	typedef unsigned int uint;
+
 public:
 	CXingHeader(const unsigned char* f_data);
 
