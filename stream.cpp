@@ -7,6 +7,7 @@
 #include "header.h"
 
 #include <new> // nothrow
+#include <memory>
 
 /******************************************************************************
  * Static Section
@@ -81,29 +82,29 @@ bool CMPEGStream::parse()
 	if(m_first_header_offset >= m_size)
 		return false;
 
-	const CMPEGHeader first( *(const uint*)(m_data + m_first_header_offset) );
+	std::auto_ptr<const CMPEGHeader> first( CMPEGHeader::gen(*(const uint*)(m_data + m_first_header_offset)) );
 
 	// Handle Xing-header frame
-	uint frameDataOffset = m_first_header_offset + first.getFrameDataOffset();
-	if(frameDataOffset + first.getFrameSize() < m_size)
+	uint frameDataOffset = m_first_header_offset + first->getFrameDataOffset();
+	if(frameDataOffset + first->getFrameSize() < m_size)
 	{
 		const CXingHeader xing(m_data + frameDataOffset);
 		if(xing.isValid())
-			m_first_header_offset += first.getNextFrame();
+			m_first_header_offset += first->getNextFrame();
 	}
 
 	for(uint offset = m_first_header_offset, next; offset < m_size; offset += next)
 	{
-		const CMPEGHeader h( *(const uint*)(m_data + offset) );
-		if(!h.isValid() || h != first)
+		const CMPEGHeader* pH = CMPEGHeader::gen( *(const uint*)(m_data + offset) );
+		if(!pH || *pH != *first)
 			break;
 
-		next = h.getNextFrame();
+		next = pH->getNextFrame();
 		//m_frames.push_back( SFrameInfo(offset, next, m_length) );
 		m_frames++;
 
-		m_length += h.getFrameLength();
-		m_abr += h.getBitrate() / 1000;
+		m_length += pH->getFrameLength();
+		m_abr += pH->getBitrate() / 1000;
 	}
 
 	//if(m_frames.size())
@@ -126,18 +127,18 @@ uint CMPEGStream::calcFirstHeaderOffset() const
 			(i < HeaderSequenceLimit) && (offset < m_size);
 			i++)
 		{
-			const CMPEGHeader h( *(const uint*)(m_data + offset) );
-
-			if(!h.isValid())
+			const CMPEGHeader* pH = CMPEGHeader::gen( *(const uint*)(m_data + offset) );
+			if(!pH)
 			{
 				offsetFirst++;
 				break;
 			}
 
+			offset += pH->getNextFrame();
+			delete pH;
+
 			if(i == HeaderSequenceLimit - 1)
 				return offsetFirst;
-
-			offset += h.getNextFrame();
 		}
 	}
 
@@ -148,13 +149,15 @@ uint CMPEGStream::calcFirstHeaderOffset() const
 uint CMPEGStream::findHeader(const unsigned char* f_data, uint f_size) const
 {
 	uint i;
-	uint limit = f_size - CMPEGHeader::Size;
+	uint limit = f_size - CMPEGHeader::getSize();
 
 	for(i = 0; i < limit; i++)
 	{
-		CMPEGHeader header( *(const uint*)(f_data + i) );
-		if(header.isValid())
+		if(const CMPEGHeader* pH = CMPEGHeader::gen( *(const uint*)(f_data + i) ))
+		{
+			delete pH;
 			break;
+		}
 	}
 
 	return ((i == limit) ? m_size : i);

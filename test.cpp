@@ -8,27 +8,31 @@
 
 void test_header(uint f_val)
 {
-	CMPEGHeader h(f_val);
+	const CMPEGHeader* pH = CMPEGHeader::gen(f_val);
 
-	if(h.isValid())
-		std::cout << "Header:       0x" << std::hex << f_val << std::dec << std::endl <<
-					 "Version:      2" << (h.getMpegVersion().isV2() ? "" : ".5") << std::endl <<
-					 "Layer:        " << h.getLayer() << std::endl <<
-					 "Bitrate:      " << h.getBitrate() << std::endl <<
-					 "Frequency:    " << h.getFrequency() << std::endl <<
-					 "Protected:    " << h.isProtected() << std::endl <<
-					 "Padded:       " << h.isPadded() << std::endl <<
-					 "Private:      " << h.isPrivate() << std::endl <<
-					 "Copyrighted:  " << h.isCopyrighted() << std::endl <<
-					 "Original:     " << h.isOriginal() << std::endl <<
-
-					 "Emphasis:     *" << h.getEmphasis() << std::endl <<
-					 "Channel:      *" << h.getChannelMode() << std::endl <<
-
-					 "Frame size:   " << h.getFrameSize() << std::endl <<
-					 "Frame length: " << h.getFrameLength() << std::endl;
-	else
+	if(!pH)
+	{
 		std::cout << "Header is not valid" << std::endl;
+		return;
+	}
+
+	std::cout << "Header:       0x" << std::hex << f_val << std::dec << std::endl <<
+				 "Version:      2" << (pH->getMpegVersion().isV2() ? "" : ".5") << std::endl <<
+				 "Layer:        " << pH->getLayer() << std::endl <<
+				 "Bitrate:      " << pH->getBitrate() << std::endl <<
+				 "Frequency:    " << pH->getFrequency() << std::endl <<
+				 "Protected:    " << pH->isProtected() << std::endl <<
+				 "Padded:       " << pH->isPadded() << std::endl <<
+				 "Private:      " << pH->isPrivate() << std::endl <<
+				 "Copyrighted:  " << pH->isCopyrighted() << std::endl <<
+				 "Original:     " << pH->isOriginal() << std::endl <<
+
+				 "Emphasis:    *" << pH->getEmphasis() << std::endl <<
+				 "Channel:     *" << pH->getChannelMode() << std::endl <<
+
+				 "Frame size:   " << pH->getFrameSize() << std::endl <<
+				 "Frame length: " << pH->getFrameLength() << std::endl;
+	delete pH;
 }
 
 

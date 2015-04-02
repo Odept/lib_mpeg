@@ -143,30 +143,10 @@ uint CMPEGVer::getIndex() const { return (m_v2 ? (m_v25 ? 2 : 1) : 0); }
 /******************************************************************************
  * MPEG Header
  *
- * Public Section
+ * Basic Routines
  *****************************************************************************/
-// Basic routines
-CMPEGHeader::CMPEGHeader(uint f_header):
-	m_header(f_header),
-	m_valid(false),
-	m_ver(0x01/*invalid (reserved) mask*/),
-	m_layer(0),
-	m_bitrate(0),
-	m_frequency(0)
-{
-	const Header& h = (const Header&)f_header;
+uint CMPEGHeader::getSize() { return sizeof(Header); }
 
-	m_valid = h.isValid();
-	if(!m_valid)
-		return;
-
-	m_ver = calcMpegVersion();
-	m_layer = calcLayer();
-	m_bitrate = calcBitrate(m_ver, m_layer);
-	m_frequency = calcFrequency(m_ver);
-}
-
-bool CMPEGHeader::isValid() const { return m_valid; }
 
 const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_ver;		}
 uint			CMPEGHeader::getLayer()			const { return m_layer;		}
@@ -201,18 +181,29 @@ CHANNEL_MODE CMPEGHeader::getChannelMode()	const
 
 uint CMPEGHeader::getFrameDataOffset() const
 {
-	return Size + getSideInfoSize();
+	return getSize() + getSideInfoSize();
 }
 
-// Complex routines
+// Complex Routines
+CMPEGHeader* CMPEGHeader::gen(uint f_header)
+{
+	const Header& h = (const Header&)f_header;
+	if(!h.isValid())
+		return NULL;
+	return new CMPEGHeader(f_header);
+}
+
+CMPEGHeader::CMPEGHeader(uint f_header):
+	m_header(f_header),
+	m_ver( calcMpegVersion() ),
+	m_layer( calcLayer() ),
+	m_bitrate( calcBitrate(m_ver, m_layer) ),
+	m_frequency( calcFrequency(m_ver) )
+{}
+
+
 uint CMPEGHeader::getFrameSize() const
 {
-	if(!m_valid)
-	{
-		ASSERT(!"Invalid frame");
-		return 0;
-	}
-
 	// Samples Per Frame / 8
 	static const uint SPF8[][3] =
 	{
@@ -228,12 +219,6 @@ uint CMPEGHeader::getFrameSize() const
 
 float CMPEGHeader::getFrameLength() const
 {
-	if(!m_valid)
-	{
-		ASSERT(!"Invalid frame");
-		return 0;
-	}
-
 	static const float SPF[][3] =
 	{
 		{384.0f, 1152.0f, 1152.0f},
@@ -321,8 +306,7 @@ uint CMPEGHeader::getSideInfoSize() const
 		{17,  9}
 	};
 
-	ASSERT(m_valid);
-	return (m_valid && (m_layer == 3)) ? size[m_ver.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
+	return (m_layer == 3) ? size[m_ver.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
 }
 
 /******************************************************************************

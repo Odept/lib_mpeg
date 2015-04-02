@@ -3,6 +3,9 @@
 
 #pragma once
 
+
+struct Header;
+
 // Declarations
 enum CHANNEL_MODE
 {
@@ -47,13 +50,14 @@ class CMPEGHeader
 private:
 	typedef unsigned int uint;
 
-// Public Constatnts
+// Public Static Interface
 public:
-	static const uint Size = 4;
+	static CMPEGHeader* gen(uint f_header);
+
+	static uint getSize();
 
 // Interfaces
 public:
-	CMPEGHeader(uint f_header);
 
 	// Basic
 	bool isValid() const;
@@ -87,6 +91,7 @@ public:
 
 // Private members
 private:
+	CMPEGHeader(uint f_header);
 	CMPEGHeader();
 
 	CMPEGVer	calcMpegVersion()									const;
@@ -98,8 +103,6 @@ private:
 
 private:
 	uint m_header;
-
-	bool m_valid;
 
 	CMPEGVer m_ver;
 	uint m_layer;
