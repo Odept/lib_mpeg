@@ -156,12 +156,15 @@ uint CMPEGHeader::getFrameDataOffset() const
 }
 
 // Complex Routines
-CMPEGHeader* CMPEGHeader::gen(uint f_header)
+CMPEGHeader* CMPEGHeader::gen(uint f_header, void* f_pMem)
 {
 	const Header& h = (const Header&)f_header;
 	if(!h.isValid())
 		return NULL;
-	return new CMPEGHeader(f_header);
+	if(f_pMem)
+		return new (f_pMem) CMPEGHeader(f_header);
+	else
+		return new CMPEGHeader(f_header);
 }
 
 CMPEGHeader::CMPEGHeader(uint f_header):

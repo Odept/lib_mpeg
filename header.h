@@ -53,7 +53,7 @@ private:
 
 // Public Static Interface
 public:
-	static CMPEGHeader* gen(uint f_header);
+	static CMPEGHeader* gen(uint f_header, void* f_pMem = 0);
 
 	static uint getSize();
 

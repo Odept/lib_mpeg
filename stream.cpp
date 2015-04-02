@@ -93,9 +93,10 @@ bool CMPEGStream::parse()
 			m_first_header_offset += first->getNextFrame();
 	}
 
+	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(8) ));
 	for(uint offset = m_first_header_offset, next; offset < m_size; offset += next)
 	{
-		const CMPEGHeader* pH = CMPEGHeader::gen( *(const uint*)(m_data + offset) );
+		const CMPEGHeader* pH = CMPEGHeader::gen(*(const uint*)(m_data + offset), mem);
 		if(!pH || *pH != *first)
 			break;
 
