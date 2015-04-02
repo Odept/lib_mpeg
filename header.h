@@ -7,6 +7,14 @@
 struct Header;
 
 // Declarations
+enum MPEGVersion
+{
+	MPEGv25			= 0,
+	MPEGvReserved	= 1,
+	MPEGv2			= 2, // ISO/IEC 13818-3
+	MPEGv1			= 3	 // ISO/IEC 11172-3
+};
+
 enum MPEGChannelMode
 {
 	ChannelStereo		= 0,
@@ -23,28 +31,6 @@ enum MPEGEmphasis
 	EmphasisCCITJ17		= 3
 };
 
-// MPEG Version
-class CMPEGVer
-{
-private:
-	typedef unsigned int uint;
-
-public:
-	CMPEGVer(uint f_mask);
-
-	bool isValid()	const;
-	bool isV2()		const;
-
-	uint getIndex()	const;
-
-private:
-	CMPEGVer();
-
-private:
-	bool m_v2;
-	bool m_v25;
-};
-
 // MPEG Header
 class CMPEGHeader
 {
@@ -59,23 +45,17 @@ public:
 
 // Interfaces
 public:
-
-	// Basic
-	bool isValid() const;
-
-	const CMPEGVer&	getMpegVersion()	const;
+	MPEGVersion		getMpegVersion()	const;
 	uint			getLayer()			const;
+	bool			isProtected()		const;
 	uint			getBitrate()		const;
 	uint			getSamplingRate()	const;
-
-	bool			isProtected()		const;
 	bool			isPadded()			const;
 	bool			isPrivate()			const;
+	MPEGChannelMode	getChannelMode()	const;
 	bool			isCopyrighted()		const;
 	bool			isOriginal()		const;
-
 	MPEGEmphasis	getEmphasis()		const;
-	MPEGChannelMode	getChannelMode()	const;
 
 	// Complex
 	uint	getFrameSize()			const;
@@ -101,8 +81,6 @@ private:
 
 private:
 	uint m_header;
-
-	CMPEGVer m_ver;
 };
 
 // Xing Header
