@@ -12,19 +12,16 @@
 /******************************************************************************
  * MPEG Version
  *****************************************************************************/
-CMPEGVer::CMPEGVer()			{ init(0x01 /*invalid (reserved) mask*/); }
-CMPEGVer::CMPEGVer(uint f_mask)	{ init(f_mask); }
+CMPEGVer::CMPEGVer(uint f_mask)
+{
+	m_v2	= (f_mask == 0x02) || (f_mask == 0x00);
+	m_v25	= (f_mask == 0x00) || (f_mask == 0x01);
+}
 
 bool CMPEGVer::isValid()	const { return m_v2 || !m_v25; }
 bool CMPEGVer::isV2()		const { return m_v2; }
 
 uint CMPEGVer::getIndex() const { return (m_v2 ? (m_v25 ? 2 : 1) : 0); }
-
-void CMPEGVer::init(uint f_mask)
-{
-	m_v2	= (f_mask == 0x02) || (f_mask == 0x00);
-	m_v25	= (f_mask == 0x00) || (f_mask == 0x01);
-}
 
 /******************************************************************************
  * MPEG Header
@@ -35,6 +32,7 @@ void CMPEGVer::init(uint f_mask)
 CMPEGHeader::CMPEGHeader(uint f_header):
 	m_header(f_header),
 	m_valid(false),
+	m_ver(0x01/*invalid (reserved) mask*/),
 	m_layer(0),
 	m_bitrate(0),
 	m_frequency(0)
@@ -42,16 +40,16 @@ CMPEGHeader::CMPEGHeader(uint f_header):
 	m_valid = isValidInternal();
 	if(m_valid)
 	{
-		m_mpeg = calcMpegVersion();
+		m_ver = calcMpegVersion();
 		m_layer = calcLayer();
-		m_bitrate = calcBitrate(m_mpeg, m_layer);
-		m_frequency = calcFrequency(m_mpeg);
+		m_bitrate = calcBitrate(m_ver, m_layer);
+		m_frequency = calcFrequency(m_ver);
 	}
 }
 
 bool CMPEGHeader::isValid() const { return m_valid; }
 
-const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_mpeg;		}
+const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_ver;		}
 uint			CMPEGHeader::getLayer()			const { return m_layer;		}
 uint			CMPEGHeader::getBitrate()		const { return m_bitrate;	}
 uint			CMPEGHeader::getFrequency()		const { return m_frequency;	}
@@ -105,7 +103,7 @@ uint CMPEGHeader::getFrameSize() const
 	};
 	static const uint slotSize[] = {4, 1, 1};
 
-	return ((SPF8[m_mpeg.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
+	return ((SPF8[m_ver.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
 }
 
 
@@ -123,7 +121,7 @@ float CMPEGHeader::getFrameLength() const
 		{384.0f, 1152.0f,  576.0f}
 	};
 
-	return SPF[m_mpeg.isV2()][m_layer - 1] / m_frequency;
+	return SPF[m_ver.isV2()][m_layer - 1] / m_frequency;
 }
 
 
@@ -249,7 +247,7 @@ uint CMPEGHeader::getSideInfoSize() const
 	};
 
 	ASSERT(m_valid);
-	return (m_valid && (m_layer == 3)) ? size[m_mpeg.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
+	return (m_valid && (m_layer == 3)) ? size[m_ver.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
 }
 
 /******************************************************************************

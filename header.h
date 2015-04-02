@@ -26,7 +26,6 @@ private:
 	typedef unsigned int uint;
 
 public:
-	CMPEGVer();
 	CMPEGVer(uint f_mask);
 
 	bool isValid()	const;
@@ -35,7 +34,7 @@ public:
 	uint getIndex()	const;
 
 private:
-	void init(uint f_mask);
+	CMPEGVer();
 
 private:
 	bool m_v2;
@@ -104,7 +103,7 @@ private:
 
 	bool m_valid;
 
-	CMPEGVer m_mpeg;
+	CMPEGVer m_ver;
 	uint m_layer;
 	uint m_bitrate;
 	uint m_frequency;
