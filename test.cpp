@@ -16,22 +16,22 @@ void test_header(uint f_val)
 		return;
 	}
 
-	std::cout << "Header:       0x" << std::hex << f_val << std::dec << std::endl <<
-				 "Version:      2" << (pH->getMpegVersion().isV2() ? "" : ".5") << std::endl <<
-				 "Layer:        " << pH->getLayer() << std::endl <<
-				 "Bitrate:      " << pH->getBitrate() << std::endl <<
-				 "Frequency:    " << pH->getFrequency() << std::endl <<
-				 "Protected:    " << pH->isProtected() << std::endl <<
-				 "Padded:       " << pH->isPadded() << std::endl <<
-				 "Private:      " << pH->isPrivate() << std::endl <<
-				 "Copyrighted:  " << pH->isCopyrighted() << std::endl <<
-				 "Original:     " << pH->isOriginal() << std::endl <<
+	std::cout << "Header:        0x" << std::hex << f_val << std::dec << std::endl <<
+				 "Version:       2" << (pH->getMpegVersion().isV2() ? "" : ".5") << std::endl <<
+				 "Layer:         " << pH->getLayer() << std::endl <<
+				 "Bitrate:       " << pH->getBitrate() << std::endl <<
+				 "Sampling Rate: " << pH->getSamplingRate() << std::endl <<
+				 "Protected:     " << pH->isProtected() << std::endl <<
+				 "Padded:        " << pH->isPadded() << std::endl <<
+				 "Private:       " << pH->isPrivate() << std::endl <<
+				 "Copyrighted:   " << pH->isCopyrighted() << std::endl <<
+				 "Original:      " << pH->isOriginal() << std::endl <<
 
-				 "Emphasis:    *" << pH->getEmphasis() << std::endl <<
-				 "Channel:     *" << pH->getChannelMode() << std::endl <<
+				 "Emphasis:     *" << pH->getEmphasis() << std::endl <<
+				 "Channel:      *" << pH->getChannelMode() << std::endl <<
 
-				 "Frame size:   " << pH->getFrameSize() << std::endl <<
-				 "Frame length: " << pH->getFrameLength() << std::endl;
+				 "Frame size:    " << pH->getFrameSize() << std::endl <<
+				 "Frame length:  " << pH->getFrameLength() << std::endl;
 	delete pH;
 }
 

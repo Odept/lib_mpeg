@@ -66,7 +66,7 @@ public:
 	const CMPEGVer&	getMpegVersion()	const;
 	uint			getLayer()			const;
 	uint			getBitrate()		const;
-	uint			getFrequency()		const;
+	uint			getSamplingRate()	const;
 
 	bool			isProtected()		const;
 	bool			isPadded()			const;
@@ -97,19 +97,12 @@ private:
 
 	const Header& header() const;
 
-	CMPEGVer	calcMpegVersion()									const;
-	uint		calcBitrate(const CMPEGVer& f_ver, uint f_layer)	const;
-	uint		calcFrequency(const CMPEGVer& f_ver)				const;
-
 	uint getSideInfoSize() const;
 
 private:
 	uint m_header;
 
 	CMPEGVer m_ver;
-	uint m_layer;
-	uint m_bitrate;
-	uint m_frequency;
 };
 
 // Xing Header

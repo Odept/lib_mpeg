@@ -129,7 +129,7 @@ uint CMPEGVer::getIndex() const { return (m_v2 ? (m_v25 ? 2 : 1) : 0); }
 /******************************************************************************
  * MPEG Header
  *
- * Basic Routines
+ * Getters & Setters
  *****************************************************************************/
 uint CMPEGHeader::getSize() { return sizeof(Header); }
 
@@ -137,8 +137,6 @@ const Header& CMPEGHeader::header() const { return (const Header&)m_header; }
 
 const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_ver;				}
 uint			CMPEGHeader::getLayer()			const { return 4 - header().Layer;	}
-uint			CMPEGHeader::getBitrate()		const { return m_bitrate;			}
-uint			CMPEGHeader::getFrequency()		const { return m_frequency;			}
 
 bool CMPEGHeader::isProtected()		const { return header().isProtected();	}
 bool CMPEGHeader::isPadded()		const { return header().Padding;		}
@@ -147,13 +145,9 @@ bool CMPEGHeader::isCopyrighted()	const { return header().Copyright;		}
 bool CMPEGHeader::isOriginal()		const { return header().Original;		}
 
 MPEGEmphasis	CMPEGHeader::getEmphasis()		const { return (MPEGEmphasis   )header().Emphasis; }
-
 MPEGChannelMode	CMPEGHeader::getChannelMode()	const { return (MPEGChannelMode)header().Channel;  }
 
-uint CMPEGHeader::getFrameDataOffset() const
-{
-	return getSize() + getSideInfoSize();
-}
+uint CMPEGHeader::getFrameDataOffset()			const { return getSize() + getSideInfoSize(); }
 
 // Complex Routines
 CMPEGHeader* CMPEGHeader::gen(uint f_header, void* f_pMem)
@@ -169,10 +163,40 @@ CMPEGHeader* CMPEGHeader::gen(uint f_header, void* f_pMem)
 
 CMPEGHeader::CMPEGHeader(uint f_header):
 	m_header(f_header),
-	m_ver( calcMpegVersion() ),
-	m_bitrate( calcBitrate(m_ver, getLayer()) ),
-	m_frequency( calcFrequency(m_ver) )
+	m_ver(header().Version)
 {}
+
+
+uint CMPEGHeader::getBitrate() const
+{
+	static const uint index[][3] =
+	{
+		{0, 1, 2},
+		{3, 4, 4}
+	};
+	static const uint bitrate[][16] =
+	{
+		{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
+		{0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
+		{0, 32, 40, 48,  56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 0},
+		{0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
+		{0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160, 0}
+	};
+	return bitrate[ index[m_ver.isV2()][getLayer() - 1] ]
+				  [ header().Bitrate ] * 1000;
+}
+
+
+uint CMPEGHeader::getSamplingRate() const
+{
+	static const uint frequency[][3] =
+	{
+		{44100, 48000, 32000},
+		{22050, 24000, 16000},
+		{11025, 12000,  8000}
+	};
+	return frequency[m_ver.getIndex()][header().Sampling];
+}
 
 
 uint CMPEGHeader::getFrameSize() const
@@ -187,7 +211,7 @@ uint CMPEGHeader::getFrameSize() const
 	static const uint slotSize[] = {1, 1, 4};
 
 	uint i = header().Layer - 1;
-	return ((SPF8[m_ver.isV2()][i] * m_bitrate / m_frequency) + isPadded()) * slotSize[i];
+	return ((SPF8[m_ver.isV2()][i] * getBitrate() / getSamplingRate()) + header().Padding) * slotSize[i];
 }
 
 
@@ -198,15 +222,14 @@ float CMPEGHeader::getFrameLength() const
 		{1152, 1152, 384},
 		{ 576, 1152, 384}
 	};
-
-	return SPF[m_ver.isV2()][header().Layer - 1] / (float)m_frequency;
+	return SPF[m_ver.isV2()][header().Layer - 1] / (float)getSamplingRate();
 }
 
 
 uint CMPEGHeader::getNextFrame() const
 {
 	ASSERT(!isCopyrighted());
-	return (/*sizeof(m_header) + */getFrameSize() + isCopyrighted() * sizeof(short)/* + getSideInfoSize()*/);
+	return (getFrameSize() + isCopyrighted() * sizeof(short)/* + getSideInfoSize()*/);
 }
 
 // version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
@@ -223,49 +246,6 @@ bool CMPEGHeader::operator!=(const CMPEGHeader& f_header) const
 /******************************************************************************
  * Private Section
  *****************************************************************************/
-// Basic routines
-CMPEGVer CMPEGHeader::calcMpegVersion() const { return CMPEGVer(header().Version); }
-
-// Complex routines
-uint CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, uint f_layer) const
-{
-	ASSERT(f_ver.isValid() && f_layer && (f_layer < 4));
-
-	static const uint index[][3] =
-	{
-		{0, 1, 2},
-		{3, 4, 4}
-	};
-	static const uint bitrate[][16] =
-	{
-		{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
-		{0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
-		{0, 32, 40, 48,  56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 0},
-		{0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
-		{0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160, 0}
-	};
-
-	return bitrate[ index[f_ver.isV2()][f_layer - 1] ]
-				  [ (m_header >> 20) & 0x0F ] * 1000;
-}
-
-
-uint CMPEGHeader::calcFrequency(const CMPEGVer& f_ver) const
-{
-	ASSERT(f_ver.isValid());
-
-	static const uint frequency[][3] =
-	{
-		{44100, 48000, 32000},
-		{22050, 24000, 16000},
-		{11025, 12000,  8000},
-		{    0,     0,     0}
-	};
-	
-	return frequency[f_ver.getIndex()][(m_header >> 18) & 0x03];
-}
-
-
 uint CMPEGHeader::getSideInfoSize() const
 {
 	static const uint size[][2] =
@@ -273,7 +253,6 @@ uint CMPEGHeader::getSideInfoSize() const
 		{32, 17},
 		{17,  9}
 	};
-
 	return (header().Layer == Header::Layer3) ? size[m_ver.isV2()][header().Channel == ChannelMono] : 0;
 }
 
