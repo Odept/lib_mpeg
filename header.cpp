@@ -183,8 +183,8 @@ uint CMPEGHeader::getFrameSize() const
 	};
 	static const uint slotSize[] = {1, 1, 4};
 
-	return ((SPF8[m_ver.isV2()][header().Layer] * m_bitrate / m_frequency) + isPadded()) *
-		   slotSize[header().Layer];
+	uint i = header().Layer - 1;
+	return ((SPF8[m_ver.isV2()][i] * m_bitrate / m_frequency) + isPadded()) * slotSize[i];
 }
 
 
@@ -196,7 +196,7 @@ float CMPEGHeader::getFrameLength() const
 		{ 576, 1152, 384}
 	};
 
-	return SPF[m_ver.isV2()][header().Layer] / (float)m_frequency;
+	return SPF[m_ver.isV2()][header().Layer - 1] / (float)m_frequency;
 }
 
 
