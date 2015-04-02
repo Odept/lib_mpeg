@@ -9,6 +9,123 @@
 	 (((C) & 0xFF) << 16)	|\
 	 (((D) & 0xFF) << 24))
 
+
+struct Header
+{
+	enum
+	{
+		Ver25			= 0,
+		VerReserved		= 1,
+		Ver2			= 2, // ISO/IEC 13818-3
+		Ver1			= 3	 // ISO/IEC 11172-3
+	};
+
+	enum
+	{
+		LayerReserved	= 0,
+		Layer3			= 1,
+		Layer2			= 2,
+		Layer1			= 3
+	};
+
+	enum
+	{
+		BitrateFree	= 0,
+		BitrateBad	= 0xF
+	};
+
+	enum { SamplingRateReserved = 3 };
+
+	enum
+	{
+		ChannelStereo		= 0,
+		ChannelJointStereo	= 1,
+		ChannelDual			= 2,
+		ChannelMono			= 3
+	};
+
+	enum
+	{
+		EmphasisNone		= 0,
+		Emphasis5015		= 1,
+		EmphasisReserved	= 2,
+		EmphasisCCITJ17		= 3
+	};
+
+
+	static const uint SyncMask = 0xE0FF;
+
+	// version, layer, sampling rate, channel mode, emphasis
+	// (________  ___xxxx_  ____xx__  xx____xx)
+	static const uint CmpMask = 0xC30C1E00;
+
+	// 11111111 111VVLLP BBBBSS_p CCXX@OEE
+	union
+	{
+		struct
+		{
+			uint Sync0		: 8;
+
+			uint Protection	: 1;
+			uint Layer		: 2;
+			uint Version	: 2;
+			uint Sync1		: 3;
+
+			uint Private	: 1;
+			uint Padding	: 1;
+			uint Sampling	: 2;
+			uint Bitrate	: 4;
+
+			uint Emphasis	: 2;
+			uint Original	: 1;
+			uint Copyright	: 1;
+			uint Extension	: 2;
+			uint Channel	: 2;
+		};
+		unsigned int uCell;
+	};
+
+	// ================================
+	bool isValid() const
+	{
+		if((uCell & 0xE0FF) != 0xE0FF)
+			return false;
+
+		if(Version == VerReserved							||
+		   Layer == LayerReserved							||
+		   Bitrate == BitrateFree || Bitrate == BitrateBad	||
+		   Sampling == SamplingRateReserved					||
+		   Emphasis == EmphasisReserved)
+			return false;
+
+		// MPEG 1, layer 2 additional mode check
+		if(Version != Ver1 || Layer != Layer2)
+			return true;
+
+		static const bool consistent[][16] =
+		{
+			{ true,  true},	// free
+			{false,  true},	// 32
+			{false,  true},	// 48
+			{false,  true},	// 56
+			{ true,  true},	// 64
+			{false,  true},	// 80
+			{ true,  true},	// 96
+			{ true,  true},	// 112
+			{ true,  true},	// 128
+			{ true,  true},	// 160
+			{ true,  true},	// 192
+			{ true, false},	// 224
+			{ true, false},	// 256
+			{ true, false},	// 320
+			{ true, false},	// 384
+			{false, false}	// reserved
+		};
+		return consistent[Bitrate][Channel == ChannelMono];
+	}
+};
+
+
 /******************************************************************************
  * MPEG Version
  *****************************************************************************/
@@ -37,14 +154,16 @@ CMPEGHeader::CMPEGHeader(uint f_header):
 	m_bitrate(0),
 	m_frequency(0)
 {
-	m_valid = isValidInternal();
-	if(m_valid)
-	{
-		m_ver = calcMpegVersion();
-		m_layer = calcLayer();
-		m_bitrate = calcBitrate(m_ver, m_layer);
-		m_frequency = calcFrequency(m_ver);
-	}
+	const Header& h = (const Header&)f_header;
+
+	m_valid = h.isValid();
+	if(!m_valid)
+		return;
+
+	m_ver = calcMpegVersion();
+	m_layer = calcLayer();
+	m_bitrate = calcBitrate(m_ver, m_layer);
+	m_frequency = calcFrequency(m_ver);
 }
 
 bool CMPEGHeader::isValid() const { return m_valid; }
@@ -132,10 +251,9 @@ uint CMPEGHeader::getNextFrame() const
 }
 
 // version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
-static const uint HeaderMask = 0xC30C1E00;
 bool CMPEGHeader::operator==(const CMPEGHeader& f_header) const
 {
-	return ((m_header & HeaderMask) == (f_header.m_header & HeaderMask));
+	return ((m_header & Header::CmpMask) == (f_header.m_header & Header::CmpMask));
 }
 
 bool CMPEGHeader::operator!=(const CMPEGHeader& f_header) const
@@ -156,49 +274,6 @@ uint CMPEGHeader::calcLayer() const
 }
 
 // Complex routines
-bool CMPEGHeader::isValidInternal() const
-{
-	if((m_header & 0xE0FF) != 0xE0FF)
-		return false;
-
-	if(!(m_header & 0x0600) || !(m_header & 0xF00000) ||	/*!(m_header & 0x030000) ||*/
-	   !(~m_header & 0xF00000) || !(~m_header & 0x0C0000))
-		return false;
-
-	if(((m_header & 0x1800) == 0x0800) || ((m_header & 0x03000000) == 0x02000000))
-		return false;
-
-	// MPEG 1, layer 2 additional mode check
-	if(((m_header & 0x1800) == 0x1800) && ((m_header & 0x0600) == 0x0400))
-	{
-		static const bool consistent[][16] =
-		{
-			{ true,  true},	// free
-			{false,  true},	// 32
-			{false,  true},	// 48
-			{false,  true},	// 56
-			{ true,  true},	// 64
-			{false,  true},	// 80
-			{ true,  true},	// 96
-			{ true,  true},	// 112
-			{ true,  true},	// 128
-			{ true,  true},	// 160
-			{ true,  true},	// 192
-			{ true, false},	// 224
-			{ true, false},	// 256
-			{ true, false},	// 320
-			{ true, false},	// 384
-			{false, false}	// reserved
-		};
-
-		return consistent[((m_header >> 20) & 0x0F)]			// bitrate index
-						 [(((m_header >> 30) & 0x3) == 0x3)];	// mono
-	}
-
-	return true;
-}
-
-
 uint CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, uint f_layer) const
 {
 	ASSERT(f_ver.isValid() && f_layer && (f_layer < 4));

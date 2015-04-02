@@ -89,8 +89,6 @@ public:
 private:
 	CMPEGHeader();
 
-	bool isValidInternal() const;
-
 	CMPEGVer	calcMpegVersion()									const;
 	uint		calcLayer()											const;
 	uint		calcBitrate(const CMPEGVer& f_ver, uint f_layer)	const;
