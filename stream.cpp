@@ -88,9 +88,11 @@ bool CMPEGStream::parse()
 	uint frameDataOffset = m_first_header_offset + first->getFrameDataOffset();
 	if(frameDataOffset + first->getFrameSize() < m_size)
 	{
-		const CXingHeader xing(m_data + frameDataOffset);
-		if(xing.isValid())
+		if(const CXingHeader* pXing = CXingHeader::gen(m_data + frameDataOffset))
+		{
 			m_first_header_offset += first->getNextFrame();
+			delete pXing;
+		}
 	}
 
 	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(8) ));

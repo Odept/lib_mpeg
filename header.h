@@ -87,24 +87,23 @@ private:
 class CXingHeader
 {
 private:
-	typedef unsigned int uint;
+	typedef unsigned int	uint;
+	typedef unsigned char	uchar;
 
 public:
-	CXingHeader(const unsigned char* f_data);
+	static CXingHeader* gen(const uchar* f_pData);
 
-	bool isValid()			const;
-
+public:
 	uint getFrameCount()	const;
 	uint getByteCount()		const;
 	uint getTOCsOffset()	const;
 	uint getQuality()		const;
 
 private:
+	CXingHeader(const uchar* f_pData);
 	CXingHeader();
 
 private:
-	bool m_valid;
-
 	uint m_frames;
 	uint m_bytes;
 	uint m_TOCsOffset;
