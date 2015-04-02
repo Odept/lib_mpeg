@@ -7,19 +7,20 @@
 struct Header;
 
 // Declarations
-enum CHANNEL_MODE
+enum MPEGChannelMode
 {
-	CHANNEL_STEREO = 0,
-	CHANNEL_JOINT_STEREO,
-	CHANNEL_DUAL,
-	CHANNEL_MONO
+	ChannelStereo		= 0,
+	ChannelJointStereo	= 1,
+	ChannelDual			= 2,
+	ChannelMono			= 3
 };
 
-enum EMPHASIS
+enum MPEGEmphasis
 {
-	EMPHASIS_NONE,
-	EMPHASIS_50_15,
-	EMPHASIS_CCIT_J17
+	EmphasisNone		= 0,
+	Emphasis5015		= 1,
+	EmphasisReserved	= 2,
+	EmphasisCCITJ17		= 3
 };
 
 // MPEG Version
@@ -73,8 +74,8 @@ public:
 	bool			isCopyrighted()		const;
 	bool			isOriginal()		const;
 
-	EMPHASIS		getEmphasis()		const;
-	CHANNEL_MODE	getChannelMode()	const;
+	MPEGEmphasis	getEmphasis()		const;
+	MPEGChannelMode	getChannelMode()	const;
 
 	// Complex
 	uint	getFrameSize()			const;
@@ -94,8 +95,9 @@ private:
 	CMPEGHeader(uint f_header);
 	CMPEGHeader();
 
+	const Header& header() const;
+
 	CMPEGVer	calcMpegVersion()									const;
-	uint		calcLayer()											const;
 	uint		calcBitrate(const CMPEGVer& f_ver, uint f_layer)	const;
 	uint		calcFrequency(const CMPEGVer& f_ver)				const;
 

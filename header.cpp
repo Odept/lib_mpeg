@@ -36,22 +36,6 @@ struct Header
 
 	enum { SamplingRateReserved = 3 };
 
-	enum
-	{
-		ChannelStereo		= 0,
-		ChannelJointStereo	= 1,
-		ChannelDual			= 2,
-		ChannelMono			= 3
-	};
-
-	enum
-	{
-		EmphasisNone		= 0,
-		Emphasis5015		= 1,
-		EmphasisReserved	= 2,
-		EmphasisCCITJ17		= 3
-	};
-
 
 	static const uint SyncMask = 0xE0FF;
 
@@ -88,7 +72,7 @@ struct Header
 	// ================================
 	bool isValid() const
 	{
-		if((uCell & 0xE0FF) != 0xE0FF)
+		if((uCell & SyncMask) != SyncMask)
 			return false;
 
 		if(Version == VerReserved							||
@@ -123,6 +107,8 @@ struct Header
 		};
 		return consistent[Bitrate][Channel == ChannelMono];
 	}
+
+	bool isProtected() const { return !Protection;	}
 };
 
 
@@ -147,37 +133,22 @@ uint CMPEGVer::getIndex() const { return (m_v2 ? (m_v25 ? 2 : 1) : 0); }
  *****************************************************************************/
 uint CMPEGHeader::getSize() { return sizeof(Header); }
 
+const Header& CMPEGHeader::header() const { return (const Header&)m_header; }
 
-const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_ver;		}
-uint			CMPEGHeader::getLayer()			const { return m_layer;		}
-uint			CMPEGHeader::getBitrate()		const { return m_bitrate;	}
-uint			CMPEGHeader::getFrequency()		const { return m_frequency;	}
+const CMPEGVer&	CMPEGHeader::getMpegVersion()	const { return m_ver;				}
+uint			CMPEGHeader::getLayer()			const { return 4 - header().Layer;	}
+uint			CMPEGHeader::getBitrate()		const { return m_bitrate;			}
+uint			CMPEGHeader::getFrequency()		const { return m_frequency;			}
 
-bool CMPEGHeader::isProtected()		const { return !((m_header >> 8) & 0x01); }
-bool CMPEGHeader::isPadded()		const { return ((m_header >> 17) & 0x01); }
-bool CMPEGHeader::isPrivate()		const { return ((m_header >> 16) & 0x01); }
-bool CMPEGHeader::isCopyrighted()	const { return ((m_header >> 27) & 0x01); }
-bool CMPEGHeader::isOriginal()		const { return ((m_header >> 26) & 0x01); }
+bool CMPEGHeader::isProtected()		const { return header().isProtected();	}
+bool CMPEGHeader::isPadded()		const { return header().Padding;		}
+bool CMPEGHeader::isPrivate()		const { return header().Private;		}
+bool CMPEGHeader::isCopyrighted()	const { return header().Copyright;		}
+bool CMPEGHeader::isOriginal()		const { return header().Original;		}
 
-EMPHASIS CMPEGHeader::getEmphasis() const
-{
-	ASSERT(((m_header >> 24) & 0x03) != 0x02);
+MPEGEmphasis	CMPEGHeader::getEmphasis()		const { return (MPEGEmphasis   )header().Emphasis; }
 
-	switch((m_header >> 24) & 0x03)
-	{
-		case 0x01: return EMPHASIS_50_15;
-		case 0x03: return EMPHASIS_CCIT_J17;
-		case 0x00:
-
-		default:
-			return EMPHASIS_NONE;
-	}
-}
-
-CHANNEL_MODE CMPEGHeader::getChannelMode()	const
-{
-	return (CHANNEL_MODE)((m_header >> 30) & 0x03);
-}
+MPEGChannelMode	CMPEGHeader::getChannelMode()	const { return (MPEGChannelMode)header().Channel;  }
 
 uint CMPEGHeader::getFrameDataOffset() const
 {
@@ -196,8 +167,7 @@ CMPEGHeader* CMPEGHeader::gen(uint f_header)
 CMPEGHeader::CMPEGHeader(uint f_header):
 	m_header(f_header),
 	m_ver( calcMpegVersion() ),
-	m_layer( calcLayer() ),
-	m_bitrate( calcBitrate(m_ver, m_layer) ),
+	m_bitrate( calcBitrate(m_ver, getLayer()) ),
 	m_frequency( calcFrequency(m_ver) )
 {}
 
@@ -208,24 +178,25 @@ uint CMPEGHeader::getFrameSize() const
 	static const uint SPF8[][3] =
 	{
 		// 12 must be multiplied by 4 because of slot size
-		{12, 144, 144},
-		{12, 144,  72}
+		{144, 144, 12},
+		{ 72, 144, 12}
 	};
-	static const uint slotSize[] = {4, 1, 1};
+	static const uint slotSize[] = {1, 1, 4};
 
-	return ((SPF8[m_ver.isV2()][m_layer - 1] * m_bitrate / m_frequency) + isPadded()) * slotSize[m_layer - 1];
+	return ((SPF8[m_ver.isV2()][header().Layer] * m_bitrate / m_frequency) + isPadded()) *
+		   slotSize[header().Layer];
 }
 
 
 float CMPEGHeader::getFrameLength() const
 {
-	static const float SPF[][3] =
+	static const uint SPF[][3] =
 	{
-		{384.0f, 1152.0f, 1152.0f},
-		{384.0f, 1152.0f,  576.0f}
+		{1152, 1152, 384},
+		{ 576, 1152, 384}
 	};
 
-	return SPF[m_ver.isV2()][m_layer - 1] / m_frequency;
+	return SPF[m_ver.isV2()][header().Layer] / (float)m_frequency;
 }
 
 
@@ -250,13 +221,7 @@ bool CMPEGHeader::operator!=(const CMPEGHeader& f_header) const
  * Private Section
  *****************************************************************************/
 // Basic routines
-CMPEGVer CMPEGHeader::calcMpegVersion() const { return CMPEGVer((m_header >> 11) & 0x3); }
-
-uint CMPEGHeader::calcLayer() const
-{
-	ASSERT((m_header >> 9) & 0x03);
-	return (4 - ((m_header >> 9) & 0x03));
-}
+CMPEGVer CMPEGHeader::calcMpegVersion() const { return CMPEGVer(header().Version); }
 
 // Complex routines
 uint CMPEGHeader::calcBitrate(const CMPEGVer& f_ver, uint f_layer) const
@@ -306,7 +271,7 @@ uint CMPEGHeader::getSideInfoSize() const
 		{17,  9}
 	};
 
-	return (m_layer == 3) ? size[m_ver.isV2()][getChannelMode() == CHANNEL_MONO] : 0;
+	return (header().Layer == Header::Layer3) ? size[m_ver.isV2()][header().Channel == ChannelMono] : 0;
 }
 
 /******************************************************************************
