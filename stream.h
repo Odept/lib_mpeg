@@ -10,7 +10,8 @@ class CMPEGStream
 {
 // Declarations
 private:
-	typedef unsigned int uint;
+	typedef unsigned int	uint;
+	typedef unsigned char	uchar;
 
 /*	struct SFrameInfo
 	{
@@ -28,7 +29,8 @@ private:
 
 // Routines
 public:
-	static CMPEGStream* gen(const unsigned char* f_data, uint f_size);
+	static CMPEGStream*	gen(const uchar* f_data, uint f_size);
+	static bool			verifyFrameSequence(const uchar* f_data, uint f_size);
 
 public:
 	uint	getFrameCount()			const;
@@ -37,17 +39,17 @@ public:
 	uint	getFirstHeaderOffset()	const;
 
 private:
-	CMPEGStream(const unsigned char* f_data, uint f_size);
+	CMPEGStream(const uchar* f_data, uint f_size);
 	CMPEGStream();
 
 	bool parse();
 
 	uint calcFirstHeaderOffset() const;
-	uint findHeader(const unsigned char* f_data, uint f_size) const;
+	uint findHeader(const uchar* f_data, uint f_size) const;
 
 // Members
 private:
-	const unsigned char* m_data;
+	const uchar* m_data;
 	uint m_size;
 
 	uint m_first_header_offset;

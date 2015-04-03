@@ -119,31 +119,36 @@ bool CMPEGStream::parse()
 }
 
 
+bool CMPEGStream::verifyFrameSequence(const uchar* f_data, uint f_size)
+{
+	static const uint HeaderSequenceLimit = 2;
+
+	for(uint n = HeaderSequenceLimit, offset = 0;
+		(offset + CMPEGHeader::getSize()) <= f_size;
+		n--)
+	{
+		static char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(sizeof(void*)) ));
+		const CMPEGHeader* pH = CMPEGHeader::gen(*(const uint*)(f_data + offset), mem);
+		if(!pH)
+			break;
+
+		offset += pH->getNextFrame();
+		pH->~CMPEGHeader();
+
+		if(!n)
+			return true;
+	}
+
+	return false;
+}
+
 uint CMPEGStream::calcFirstHeaderOffset() const
 {
-	static const uint HeaderSequenceLimit = 3;
-
-	for(uint offsetFirst = 0;;)
+	for(uint offset = 0;;)
 	{
-		offsetFirst += findHeader(m_data + offsetFirst, m_size - offsetFirst);
-
-		for(uint i = 0, offset = offsetFirst;
-			(i < HeaderSequenceLimit) && (offset < m_size);
-			i++)
-		{
-			const CMPEGHeader* pH = CMPEGHeader::gen( *(const uint*)(m_data + offset) );
-			if(!pH)
-			{
-				offsetFirst++;
-				break;
-			}
-
-			offset += pH->getNextFrame();
-			delete pH;
-
-			if(i == HeaderSequenceLimit - 1)
-				return offsetFirst;
-		}
+		offset += findHeader(m_data + offset, m_size - offset);
+		if( verifyFrameSequence(m_data + offset, m_size - offset) )
+			return offset;
 	}
 
 	return m_size;
