@@ -3,7 +3,7 @@
 
 #pragma once
 
-//#include <vector>
+#include <vector>
 
 
 class CMPEGStream
@@ -27,38 +27,40 @@ private:
 	};
 //*/
 
-// Routines
+// Static Section
 public:
 	static CMPEGStream*	gen(const uchar* f_data, uint f_size);
-	static bool			verifyFrameSequence(const uchar* f_data, uint f_size);
 
+	static uint calcFirstHeaderOffset(const uchar* f_data, uint f_size);
+	static bool verifyFrameSequence  (const uchar* f_data, uint f_size);
+
+private:
+	static uint findHeader(const uchar* f_data, uint f_size);
+
+// Public Section
 public:
-	uint	getFrameCount()			const;
-	float	getLength()				const;
-	uint	getBitrate()			const;
-	uint	getFirstHeaderOffset()	const;
+	virtual ~CMPEGStream();
+
+	uint	getFirstDataFrameOffset()	const;
+	uint	getFrameCount()				const;
+	float	getLength()					const;
+	uint	getBitrate()				const;
 
 private:
 	CMPEGStream(const uchar* f_data, uint f_size);
 	CMPEGStream();
 
-	bool parse();
-
-	uint calcFirstHeaderOffset() const;
-	uint findHeader(const uchar* f_data, uint f_size) const;
-
-// Members
 private:
-	const uchar* m_data;
-	uint m_size;
+	std::vector<uchar> m_data;
+	uint	m_size;
 
-	uint m_first_header_offset;
+	uint	m_offset;
 
-	float m_length;
-	uint m_abr;
+	float	m_length;
+	uint	m_abr;
 
 	//std::vector<SFrameInfo> m_frames;
-	uint m_frames;
+	uint	m_frames;
 };
 
 #endif	// _MPEG_STREAM_H_

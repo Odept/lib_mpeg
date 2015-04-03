@@ -69,18 +69,21 @@ void test_file(const char* f_path)
 			break;
 		}
 
-		pMPEG = CMPEGStream::gen(pBuf, fsize);
-		if(!pMPEG)
+		uint offset = CMPEGStream::calcFirstHeaderOffset(pBuf, fsize);
+		if(offset >= fsize)
 		{
 			std::cout << "Failed to init MPEG stream" << std::endl;
 			break;
 		}
 
+		pMPEG = CMPEGStream::gen(pBuf + offset, fsize - offset);
+
+		uint uDataOffset = pMPEG->getFirstDataFrameOffset();
 		std::cout << f_path << std::endl << "================" << std::endl <<
-					 "Frames:  " << pMPEG->getFrameCount() << std::endl <<
-					 "Length:  " << pMPEG->getLength() << std::endl <<
-					 "Bitrate: " << pMPEG->getBitrate() << std::endl <<
-					 "Offset:  " << pMPEG->getFirstHeaderOffset() << std::endl;
+					 "Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : "") << std::endl <<
+					 "Frames : " << pMPEG->getFrameCount() << std::endl <<
+					 "Length : " << pMPEG->getLength() << std::endl <<
+					 "Bitrate: " << pMPEG->getBitrate() << std::endl;
 	}
 	while(0);
 
