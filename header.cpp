@@ -152,6 +152,7 @@ uint CMPEGHeader::getSamplingRate() const
 
 // ============================================================================
 CMPEGHeader::CMPEGHeader(uint f_header): m_header(f_header) {}
+CMPEGHeader::~CMPEGHeader() {}
 
 CMPEGHeader* CMPEGHeader::gen(uint f_header, void* f_pMem)
 {

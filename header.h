@@ -45,6 +45,8 @@ public:
 
 // Interfaces
 public:
+	virtual ~CMPEGHeader();
+
 	MPEGVersion		getMpegVersion()	const;
 	uint			getLayer()			const;
 	bool			isProtected()		const;

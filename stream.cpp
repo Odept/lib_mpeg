@@ -95,7 +95,7 @@ bool CMPEGStream::parse()
 		}
 	}
 
-	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(8) ));
+	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(sizeof(void*)) ));
 	for(uint offset = m_first_header_offset, next; offset < m_size; offset += next)
 	{
 		const CMPEGHeader* pH = CMPEGHeader::gen(*(const uint*)(m_data + offset), mem);
@@ -108,6 +108,7 @@ bool CMPEGStream::parse()
 
 		m_length += pH->getFrameLength();
 		m_abr += pH->getBitrate() / 1000;
+		pH->~CMPEGHeader();
 	}
 
 	//if(m_frames.size())
