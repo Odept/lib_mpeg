@@ -28,7 +28,7 @@ private:
 
 // Routines
 public:
-	static CMPEGStream* get(const unsigned char* f_data, uint f_size);
+	static CMPEGStream* gen(const unsigned char* f_data, uint f_size);
 
 public:
 	uint	getFrameCount()			const;

@@ -69,7 +69,7 @@ void test_file(const char* f_path)
 			break;
 		}
 
-		pMPEG = CMPEGStream::get(pBuf, fsize);
+		pMPEG = CMPEGStream::gen(pBuf, fsize);
 		if(!pMPEG)
 		{
 			std::cout << "Failed to init MPEG stream" << std::endl;

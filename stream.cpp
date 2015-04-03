@@ -12,7 +12,7 @@
 /******************************************************************************
  * Static Section
  *****************************************************************************/
-CMPEGStream* CMPEGStream::get(const unsigned char* f_data, uint f_size)
+CMPEGStream* CMPEGStream::gen(const unsigned char* f_data, uint f_size)
 {
 	CMPEGStream* p = new(std::nothrow) CMPEGStream(f_data, f_size);
 	ASSERT(p);
