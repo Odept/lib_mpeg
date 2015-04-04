@@ -52,7 +52,7 @@ CMPEGStream* CMPEGStream::gen(const uchar* f_data, uint f_size)
 
 uint CMPEGStream::calcFirstHeaderOffset(const uchar* f_data, uint f_size)
 {
-	for(uint offset = 0;;)
+	for(uint offset = 0;; offset++)
 	{
 		offset += findHeader(f_data + offset, f_size - offset);
 		if( verifyFrameSequence(f_data + offset, f_size - offset) )
