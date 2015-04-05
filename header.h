@@ -51,7 +51,7 @@ public:
 public:
 	virtual ~CMPEGHeader();
 
-	MPEGVersion		getMpegVersion()	const;
+	MPEGVersion		getVersion()		const;
 	uint			getLayer()			const;
 	bool			isProtected()		const;
 	uint			getBitrate()		const;

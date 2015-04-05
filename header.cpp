@@ -125,7 +125,7 @@ const char* CMPEGHeader::strEmphasis(uint f_emphasis)
 // ====================================
 const Header& CMPEGHeader::header() const { return (const Header&)m_header; }
 
-MPEGVersion		CMPEGHeader::getMpegVersion()	const { return (MPEGVersion    )header().Version;	}
+MPEGVersion		CMPEGHeader::getVersion()		const { return (MPEGVersion    )header().Version;	}
 uint			CMPEGHeader::getLayer()			const { return              4 - header().Layer;		}
 MPEGChannelMode	CMPEGHeader::getChannelMode()	const { return (MPEGChannelMode)header().Channel;	}
 MPEGEmphasis	CMPEGHeader::getEmphasis()		const { return (MPEGEmphasis   )header().Emphasis;	}

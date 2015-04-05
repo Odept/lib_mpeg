@@ -15,7 +15,7 @@ void test_header(uint f_val)
 		return;
 	}
 
-	MPEGVersion ver = pH->getMpegVersion();
+	MPEGVersion ver = pH->getVersion();
 
 	std::cout << "Header:        0x"	<< std::hex << f_val << std::dec << std::endl <<
 				 "Version:       "		<< ((ver == MPEGv1) ? "1" : "2") << ((ver == MPEGv25) ? ".5" : "") << std::endl <<
