@@ -103,6 +103,26 @@ struct Header
  *****************************************************************************/
 uint CMPEGHeader::getSize() { return sizeof(Header); }
 
+const char* CMPEGHeader::strVer(uint f_ver)
+{
+	static const char* ver[] = {"2.5", "", "2", "1"};
+	ASSERT(f_ver < (sizeof(ver) / sizeof(*ver)));
+	return ver[f_ver];
+}
+const char* CMPEGHeader::strChannelMode(uint f_mode)
+{
+	static const char* mode[] = {"Stereo", "Joint Stereo", "Dual", "Mono"};
+	ASSERT(f_mode < (sizeof(mode) / sizeof(*mode)));
+	return mode[f_mode];
+}
+const char* CMPEGHeader::strEmphasis(uint f_emphasis)
+{
+	static const char* emphasis[] = {"", "50/15", "", "CCIT J.17"};
+	ASSERT(f_emphasis < (sizeof(emphasis) / sizeof(*emphasis)));
+	return emphasis[f_emphasis];
+}
+
+// ====================================
 const Header& CMPEGHeader::header() const { return (const Header&)m_header; }
 
 MPEGVersion		CMPEGHeader::getMpegVersion()	const { return (MPEGVersion    )header().Version;	}

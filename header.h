@@ -43,6 +43,10 @@ public:
 
 	static uint getSize();
 
+	static const char* strVer(uint f_ver);
+	static const char* strChannelMode(uint f_mode);
+	static const char* strEmphasis(uint f_emphasis);
+
 // Interfaces
 public:
 	virtual ~CMPEGHeader();
