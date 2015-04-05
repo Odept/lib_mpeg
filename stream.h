@@ -13,19 +13,18 @@ private:
 	typedef unsigned int	uint;
 	typedef unsigned char	uchar;
 
-/*	struct SFrameInfo
+	struct FrameInfo
 	{
-		SFrameInfo(uint f_offset, uint f_size, float f_length):
-			offset(f_offset),
-			size(f_size),
-			length(f_length)
+		FrameInfo(uint f_offset, uint f_size, float f_time):
+			Offset(f_offset),
+			Size(f_size),
+			Time(f_time)
 		{}
 
-		uint offset;
-		uint size;
-		float		 length;
+		uint	Offset;
+		uint	Size;
+		float	Time;
 	};
-//*/
 
 // Static Section
 public:
@@ -44,7 +43,18 @@ public:
 	uint	getFirstDataFrameOffset()	const;
 	uint	getFrameCount()				const;
 	float	getLength()					const;
-	uint	getBitrate()				const;
+
+	const char*	getVersion()		const;
+	uint		getLayer()			const;
+	uint		getBitrate()		const;
+	bool		isVBR()				const;
+	uint		getSamplingRate()	const;
+	const char*	getChannelMode()	const;
+	const char*	getEmphasis()		const;
+
+	uint	getFrameOffset(uint f_index)	const;
+	uint	getFrameSize(uint f_index)		const;
+	float	getFrameTime(uint f_index)		const;
 
 private:
 	CMPEGStream(const uchar* f_data, uint f_size);
@@ -52,15 +62,19 @@ private:
 
 private:
 	std::vector<uchar> m_data;
-	uint	m_size;
 
 	uint	m_offset;
-
 	float	m_length;
-	uint	m_abr;
 
-	//std::vector<SFrameInfo> m_frames;
-	uint	m_frames;
+	uint	m_version;
+	uint	m_layer;
+	uint	m_abr;
+	bool	m_vbr;
+	uint	m_sampling_rate;
+	uint	m_channel_mode;
+	uint	m_emphasis;
+
+	std::vector<FrameInfo> m_frames;
 };
 
 #endif	// _MPEG_STREAM_H_

@@ -83,7 +83,11 @@ void test_file(const char* f_path)
 					 "Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : "") << std::endl <<
 					 "Frames : " << pMPEG->getFrameCount() << std::endl <<
 					 "Length : " << pMPEG->getLength() << std::endl <<
-					 "Bitrate: " << pMPEG->getBitrate() << std::endl;
+					 "MPEG " << pMPEG->getVersion() << " Layer " << pMPEG->getLayer() << std::endl <<
+					 "Bitrate      : " << pMPEG->getBitrate() << " kbps" << (pMPEG->isVBR() ? " (VBR)" : "") << std::endl <<
+					 "Sampling Rate: " << pMPEG->getSamplingRate() << " Hz" << std::endl <<
+					 "Channel Mode : " << pMPEG->getChannelMode() << std::endl <<
+					 "Emphasis     : " << pMPEG->getEmphasis() << std::endl;
 	}
 	while(0);
 
@@ -96,7 +100,7 @@ int main(int, char**)
 {
 	test_file("test.mp3");
 	std::cout << "================" << std::endl;
-	test_header(0x44e0fbff);
+	test_header(0x64e0fbff);
 
 	return 0;
 }

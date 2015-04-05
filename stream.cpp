@@ -12,32 +12,55 @@
 /******************************************************************************
  * Public Section
  *****************************************************************************/
-uint	CMPEGStream::getFirstDataFrameOffset()	const { return m_offset;	}
-uint	CMPEGStream::getFrameCount()			const { return m_frames/*(uint)m_frames.size()*/; }
-float	CMPEGStream::getLength()				const { return m_length;	}
-uint	CMPEGStream::getBitrate()				const { return m_abr;		}
+uint	CMPEGStream::getFirstDataFrameOffset()	const { return m_offset;				}
+uint	CMPEGStream::getFrameCount()			const { return (uint)m_frames.size();	}
+float	CMPEGStream::getLength()				const { return m_length;				}
+
+const char*	CMPEGStream::getVersion()		const { return CMPEGHeader::strVer(m_version);				}
+uint		CMPEGStream::getLayer()			const { return m_layer;										}
+uint		CMPEGStream::getBitrate()		const { return m_abr;										}
+bool		CMPEGStream::isVBR()			const { return m_vbr;										}
+uint		CMPEGStream::getSamplingRate()	const { return m_sampling_rate;								}
+const char*	CMPEGStream::getChannelMode()	const { return CMPEGHeader::strChannelMode(m_channel_mode);	}
+const char*	CMPEGStream::getEmphasis()		const { return CMPEGHeader::strEmphasis(m_emphasis);		}
+
+uint CMPEGStream::getFrameOffset(uint f_index) const
+{
+	return (f_index < m_frames.size()) ? m_frames[f_index].Offset : (uint)m_data.size();
+}
+uint CMPEGStream::getFrameSize(uint f_index) const
+{
+	return (f_index < m_frames.size()) ? m_frames[f_index].Size : 0;
+}
+float CMPEGStream::getFrameTime(uint f_index) const
+{
+	return (f_index < m_frames.size()) ? m_frames[f_index].Time : 0.0f;
+}
+
+/*const CMPEGHeader* CMPEGStream::getFrameHeader() const
+{
+	if(f_index >= m_frames.size())
+		return NULL;
+	m_frames[f_index].Time : 0.0f;
+	return CMPEGHeader::gen( *(const uint*)(m_data + getFrameOffset(f_index)) );
+}
+*/
+
+/*uint CMPEGStream::getFrameNumber(float f_time) const
+{
+	uint i, n = getFrameCount();
+
+	for(i = 0; i < n; i++)
+	{
+		if(m_frames[i].length >= f_time)
+			break;
+	}
+
+	return i;
+}
+*/
 
 CMPEGStream::~CMPEGStream() {}
-
-	//const void*		getFramePtr(uint f_num) const { return ((f_num < getFrameCount()) ? (m_data + m_frames[f_num].offset) : NULL); }
-	/*uint CMPEGStream::getFrameNumber(float f_time) const
-	{
-		uint i, n = getFrameCount();
-
-		for(i = 0; i < n; i++)
-		{
-			if(m_frames[i].length >= f_time)
-				break;
-		}
-
-		return i;
-	}
-	float CMPEGStream::getFrameTime(uint f_num) const
-	{
-		return ((f_num < getFrameCount()) ? m_frames[f_num].length : 0.0f);
-	}
-	*/
-//	uint getFrameOffset(uint f_frame) const { return ((f_frame < getFrameCount()) ? m_frames[f_frame].offset : m_size); }
 
 /******************************************************************************
  * Static Section
@@ -106,28 +129,33 @@ uint CMPEGStream::findHeader(const uchar* f_data, uint f_size)
  * Private Section
  *****************************************************************************/
 CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
-	m_size(f_size),
 	m_offset(0),
 	m_length(0.0f),
 	m_abr(0),
-	m_frames(0)
+	m_vbr(false)
 {
 	std::auto_ptr<const CMPEGHeader> first( CMPEGHeader::gen(*(const uint*)f_data) );
-	uint offset = 0;
+	m_version		= first->getVersion();
+	m_layer			= first->getLayer();
+	m_sampling_rate	= first->getSamplingRate();
+	m_channel_mode	= first->getChannelMode();
+	m_emphasis		= first->getEmphasis();
 
 	// Handle Xing-header frame
 	uint frameDataOffset = first->getFrameDataOffset();
-	if(frameDataOffset + first->getFrameSize() < m_size)
+	if(frameDataOffset + first->getFrameSize() < f_size)
 	{
 		if(const CXingHeader* pXing = CXingHeader::gen(f_data + frameDataOffset))
 		{
-			offset += first->getNextFrame();
-			m_offset += offset;
+			m_offset += first->getNextFrame();
 			delete pXing;
 		}
 	}
 
 	// Parse MPEG frames
+	uint offset = m_offset;
+	uint br = first->getBitrate();
+
 	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(sizeof(void*)) ));
 	for(uint next; ; offset += next)
 	{
@@ -137,12 +165,14 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 		ASSERT(*pH == *first);
 
 		next = pH->getNextFrame();
-		ASSERT(offset + next <= m_size);
-		//m_frames.push_back( SFrameInfo(offset, next, m_length) );
-		m_frames++;
+		ASSERT(offset + next <= f_size);
+		m_frames.push_back( FrameInfo(offset, next, m_length) );
 
+		uint bitrate = pH->getBitrate();
 		m_length += pH->getFrameLength();
-		m_abr += pH->getBitrate() / 1000;
+		m_abr += bitrate / 1000;
+		if(!m_vbr && br != bitrate)
+			m_vbr = true;
 		pH->~CMPEGHeader();
 	}
 
@@ -150,8 +180,6 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 	m_data.resize(offset);
 	memcpy(&m_data[0], f_data, offset);
 
-	//if(m_frames.size())
-	//	m_abr /= (uint)m_frames.size();
-	m_abr /= m_frames;
+	m_abr /= m_frames.size();
 }
 
