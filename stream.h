@@ -40,6 +40,7 @@ private:
 public:
 	virtual ~CMPEGStream();
 
+	uint	getSize()					const;
 	uint	getFirstDataFrameOffset()	const;
 	uint	getFrameCount()				const;
 	float	getLength()					const;

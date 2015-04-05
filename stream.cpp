@@ -12,6 +12,7 @@
 /******************************************************************************
  * Public Section
  *****************************************************************************/
+uint	CMPEGStream::getSize()					const { return m_data.size();			}
 uint	CMPEGStream::getFirstDataFrameOffset()	const { return m_offset;				}
 uint	CMPEGStream::getFrameCount()			const { return (uint)m_frames.size();	}
 float	CMPEGStream::getLength()				const { return m_length;				}
