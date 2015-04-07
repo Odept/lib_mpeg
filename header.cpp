@@ -111,7 +111,7 @@ const char* CMPEGHeader::strVer(uint f_ver)
 }
 const char* CMPEGHeader::strChannelMode(uint f_mode)
 {
-	static const char* mode[] = {"Stereo", "Joint Stereo", "Dual", "Mono"};
+	static const char* mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
 	ASSERT(f_mode < (sizeof(mode) / sizeof(*mode)));
 	return mode[f_mode];
 }
