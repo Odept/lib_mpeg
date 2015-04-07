@@ -257,6 +257,7 @@ uint CXingHeader::getQuality()		const { return m_quality;    }
 CXingHeader* CXingHeader::gen(const uchar* f_pData)
 {
 	uint id = *(const uint*)f_pData;
+	// Xing = VBR & ABR; Info = CBR
 	if(id != FOUR_CC('X','i','n','g') && id != FOUR_CC('I','n','f','o'))
 		return NULL;
 	return new CXingHeader(f_pData);
