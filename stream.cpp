@@ -98,7 +98,7 @@ bool CMPEGStream::verifyFrameSequence(const uchar* f_data, uint f_size)
 		if(!pH)
 			break;
 
-		offset += pH->getNextFrame();
+		offset += pH->getFrameSize();
 		pH->~CMPEGHeader();
 
 		if(!n)
@@ -148,7 +148,7 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 	{
 		if(const CXingHeader* pXing = CXingHeader::gen(f_data + frameDataOffset))
 		{
-			m_offset += first->getNextFrame();
+			m_offset += first->getFrameSize();
 			delete pXing;
 		}
 	}
@@ -165,7 +165,7 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 			break;
 		ASSERT(*pH == *first);
 
-		next = pH->getNextFrame();
+		next = pH->getFrameSize();
 		ASSERT(offset + next <= f_size);
 		m_frames.push_back( FrameInfo(offset, next, m_length) );
 

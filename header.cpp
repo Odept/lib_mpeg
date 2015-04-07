@@ -211,12 +211,6 @@ float CMPEGHeader::getFrameLength() const
 	return SPF[header().isV2()][header().Layer - 1] / (float)getSamplingRate();
 }
 
-uint CMPEGHeader::getNextFrame() const
-{
-	ASSERT(!isCopyrighted());
-	return (getFrameSize() + isCopyrighted() * sizeof(short)/* + getSideInfoSize()*/);
-}
-
 
 bool CMPEGHeader::operator==(const CMPEGHeader& f_header) const
 {

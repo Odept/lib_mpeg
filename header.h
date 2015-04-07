@@ -68,8 +68,6 @@ public:
 	float	getFrameLength()		const;
 	uint	getFrameDataOffset()	const;
 
-	uint	getNextFrame()			const;
-
 	// version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
 	bool operator==(const CMPEGHeader& f_header) const;
 	bool operator!=(const CMPEGHeader& f_header) const;
