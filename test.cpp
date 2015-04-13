@@ -78,7 +78,7 @@ void test_file(const char* f_path)
 
 		pMPEG = CMPEGStream::gen(pBuf + offset, fsize - offset);
 
-		uint uDataOffset = pMPEG->getFirstDataFrameOffset();
+		uint uDataOffset = pMPEG->getFrameOffset(0);
 		std::cout << f_path << std::endl << "================" << std::endl <<
 					 "Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : "") << std::endl <<
 					 "Frames : " << pMPEG->getFrameCount() << std::endl <<
@@ -100,7 +100,7 @@ int main(int, char**)
 {
 	test_file("test.mp3");
 	std::cout << "================" << std::endl;
-	test_header(0x64e0fbff);
+	test_header(0x00A2FBFF);
 
 	return 0;
 }

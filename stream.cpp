@@ -13,7 +13,6 @@
  * Public Section
  *****************************************************************************/
 uint	CMPEGStream::getSize()					const { return m_data.size();			}
-uint	CMPEGStream::getFirstDataFrameOffset()	const { return m_offset;				}
 uint	CMPEGStream::getFrameCount()			const { return (uint)m_frames.size();	}
 float	CMPEGStream::getLength()				const { return m_length;				}
 
@@ -130,11 +129,12 @@ uint CMPEGStream::findHeader(const uchar* f_data, uint f_size)
  * Private Section
  *****************************************************************************/
 CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
-	m_offset(0),
 	m_length(0.0f),
 	m_abr(0),
 	m_vbr(false)
 {
+	uint offset = 0;
+
 	std::auto_ptr<const CMPEGHeader> first( CMPEGHeader::gen(*(const uint*)f_data) );
 	m_version		= first->getVersion();
 	m_layer			= first->getLayer();
@@ -148,13 +148,12 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 	{
 		if(const CXingHeader* pXing = CXingHeader::gen(f_data + frameDataOffset))
 		{
-			m_offset += first->getFrameSize();
+			offset += first->getFrameSize();
 			delete pXing;
 		}
 	}
 
 	// Parse MPEG frames
-	uint offset = m_offset;
 	uint br = first->getBitrate();
 
 	char mem[sizeof(CMPEGHeader)] __attribute__(( aligned(sizeof(void*)) ));

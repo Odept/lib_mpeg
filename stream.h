@@ -41,7 +41,6 @@ public:
 	virtual ~CMPEGStream();
 
 	uint	getSize()					const;
-	uint	getFirstDataFrameOffset()	const;
 	uint	getFrameCount()				const;
 	float	getLength()					const;
 
@@ -64,7 +63,6 @@ private:
 private:
 	std::vector<uchar> m_data;
 
-	uint	m_offset;
 	float	m_length;
 
 	uint	m_version;
