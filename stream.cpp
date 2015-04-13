@@ -183,3 +183,21 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 	m_abr /= m_frames.size();
 }
 
+
+uint CMPEGStream::truncate(uint f_frames)
+{
+	if(!f_frames)
+		return 0;
+
+	uint n = getFrameCount();
+	uint frames = (f_frames <= n) ? (n - f_frames) : 0;
+
+	m_data.resize( getFrameOffset(frames) );
+
+	frames = n - frames;
+	for(uint i = frames; i; i--)
+		m_frames.pop_back();
+
+	return frames;
+}
+

@@ -56,6 +56,8 @@ public:
 	uint	getFrameSize(uint f_index)		const;
 	float	getFrameTime(uint f_index)		const;
 
+	uint truncate(uint f_frames);
+
 private:
 	CMPEGStream(const uchar* f_data, uint f_size);
 	CMPEGStream();
