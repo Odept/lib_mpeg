@@ -107,6 +107,16 @@ bool CMPEGStream::verifyFrameSequence(const uchar* f_data, uint f_size)
 	return false;
 }
 
+
+bool CMPEGStream::isIncompleteFrame(const uchar* f_data, uint f_size)
+{
+	if(f_size < CMPEGHeader::getSize())
+		return false;
+
+	std::auto_ptr<const CMPEGHeader> header( CMPEGHeader::gen(*(const uint*)f_data) );
+	return (header.get() && (header->getFrameSize() > f_size));
+}
+
 // ====================================
 uint CMPEGStream::findHeader(const uchar* f_data, uint f_size)
 {

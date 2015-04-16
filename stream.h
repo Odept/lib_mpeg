@@ -33,6 +33,8 @@ public:
 	static uint calcFirstHeaderOffset(const uchar* f_data, uint f_size);
 	static bool verifyFrameSequence  (const uchar* f_data, uint f_size);
 
+	static bool isIncompleteFrame(const uchar* f_data, uint f_size);
+
 private:
 	static uint findHeader(const uchar* f_data, uint f_size);
 
