@@ -15,6 +15,8 @@ LIBS =
 
 #SRCS = header.cpp
 
+DEPS = common.h
+
 # Below we are replacing the suffix .c of all words in the macro SRCS
 # with the .o suffix
 #OBJS = $(SRCS:.c=.o)
@@ -32,12 +34,12 @@ $(TARGET).a: $(TARGET_HEADER).o $(TARGET_STREAM).o
 	@echo "###" \"$(TARGET)\" generated
 
 # Header
-$(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h
+$(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h $(DEPS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
 	@echo "###" \"$(TARGET_HEADER)\" generated
 
 # Stream
-$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h
+$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h $(DEPS)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
 	@echo "###" \"$(TARGET_STREAM)\" generated
 
