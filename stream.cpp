@@ -165,7 +165,12 @@ CMPEGStream::CMPEGStream(const uchar* f_data, uint f_size):
 		ASSERT(*pH == *first);
 
 		next = pH->getFrameSize();
-		ASSERT(offset + next <= f_size);
+		if(offset + next > f_size)
+		{
+			ERROR("Unexpected end of MPEG frame 0x" << std::hex << offset << std::dec);
+			pH->~CMPEGHeader();
+			break;
+		}
 		m_frames.push_back( FrameInfo(offset, next, m_length) );
 
 		uint bitrate = pH->getBitrate();
