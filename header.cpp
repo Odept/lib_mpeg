@@ -5,6 +5,7 @@
 
 struct Header
 {
+	// For simplicity, don't use scoped enum for internal enums
 	enum
 	{
 		LayerReserved	= 0,
@@ -15,7 +16,7 @@ struct Header
 
 	enum
 	{
-		BitrateFree	= 0,
+		BitrateFree	= 0x0,
 		BitrateBad	= 0xF
 	};
 
@@ -60,15 +61,16 @@ struct Header
 		if((uCell & SyncMask) != SyncMask)
 			return false;
 
-		if(Version == MPEGvReserved							||
-		   Layer == LayerReserved							||
-		   Bitrate == BitrateFree || Bitrate == BitrateBad	||
-		   Sampling == SamplingRateReserved					||
-		   Emphasis == EmphasisReserved)
+		if(Version	== static_cast<unsigned>(MPEG::Version::vReserved)	||
+		   Layer	== LayerReserved									||
+		   Bitrate	== BitrateFree										||
+		   Bitrate	== BitrateBad										||
+		   Sampling	== SamplingRateReserved								||
+		   Emphasis	== static_cast<unsigned>(MPEG::Emphasis::Reserved))
 			return false;
 
 		// MPEG 1, layer 2 additional mode check
-		if(Version != MPEGv1 || Layer != Layer2)
+		if(Version != static_cast<unsigned>(MPEG::Version::v1) || Layer != Layer2)
 			return true;
 
 		static const bool consistent[][16] =
@@ -90,10 +92,14 @@ struct Header
 			{ true, false},	// 384
 			{false, false}	// reserved
 		};
-		return consistent[Bitrate][Channel == ChannelMono];
+		return consistent[Bitrate][Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)];
 	}
 
-	bool isV2() const { return (Version == MPEGv2 || Version == MPEGv25); }
+	bool isV2() const
+	{
+		return (Version == static_cast<unsigned>(MPEG::Version::v2) ||
+				Version == static_cast<unsigned>(MPEG::Version::v25));
+	}
 
 	bool isProtected() const { return !Protection;	}
 };
@@ -101,45 +107,48 @@ struct Header
 /******************************************************************************
  * MPEG Header
  *****************************************************************************/
-uint CMPEGHeader::getSize() { return sizeof(Header); }
+uint CHeader::getSize() { return sizeof(Header); }
 
-const char* CMPEGHeader::strVer(uint f_ver)
+const char* CHeader::str(MPEG::Version f_ver)
 {
 	static const char* ver[] = {"2.5", "", "2", "1"};
-	ASSERT(f_ver < (sizeof(ver) / sizeof(*ver)));
-	return ver[f_ver];
+	unsigned i = static_cast<unsigned>(f_ver);
+	ASSERT(i < (sizeof(ver) / sizeof(*ver)));
+	return ver[i];
 }
-const char* CMPEGHeader::strChannelMode(uint f_mode)
+const char* CHeader::str(MPEG::ChannelMode f_mode)
 {
 	static const char* mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
-	ASSERT(f_mode < (sizeof(mode) / sizeof(*mode)));
-	return mode[f_mode];
+	unsigned i = static_cast<unsigned>(f_mode);
+	ASSERT(i < (sizeof(mode) / sizeof(*mode)));
+	return mode[i];
 }
-const char* CMPEGHeader::strEmphasis(uint f_emphasis)
+const char* CHeader::str(MPEG::Emphasis f_emphasis)
 {
 	static const char* emphasis[] = {"", "50/15", "", "CCIT J.17"};
-	ASSERT(f_emphasis < (sizeof(emphasis) / sizeof(*emphasis)));
-	return emphasis[f_emphasis];
+	unsigned i = static_cast<unsigned>(f_emphasis);
+	ASSERT(i < (sizeof(emphasis) / sizeof(*emphasis)));
+	return emphasis[i];
 }
 
 // ====================================
-const Header& CMPEGHeader::header() const { return (const Header&)m_header; }
+const Header& CHeader::header() const { return (const Header&)m_header; }
 
-MPEGVersion		CMPEGHeader::getVersion()		const { return (MPEGVersion    )header().Version;	}
-uint			CMPEGHeader::getLayer()			const { return              4 - header().Layer;		}
-MPEGChannelMode	CMPEGHeader::getChannelMode()	const { return (MPEGChannelMode)header().Channel;	}
-MPEGEmphasis	CMPEGHeader::getEmphasis()		const { return (MPEGEmphasis   )header().Emphasis;	}
+MPEG::Version		CHeader::getVersion()		const { return static_cast<MPEG::Version>	(header().Version);		}
+uint				CHeader::getLayer()			const { return							 4 - header().Layer;		}
+MPEG::ChannelMode	CHeader::getChannelMode()	const { return static_cast<MPEG::ChannelMode>(header().Channel);	}
+MPEG::Emphasis		CHeader::getEmphasis()		const { return static_cast<MPEG::Emphasis>	(header().Emphasis);	}
 
-bool CMPEGHeader::isProtected()		const { return header().isProtected();	}
-bool CMPEGHeader::isPadded()		const { return header().Padding;		}
-bool CMPEGHeader::isPrivate()		const { return header().Private;		}
-bool CMPEGHeader::isCopyrighted()	const { return header().Copyright;		}
-bool CMPEGHeader::isOriginal()		const { return header().Original;		}
+bool CHeader::isProtected()		const { return header().isProtected();	}
+bool CHeader::isPadded()		const { return header().Padding;		}
+bool CHeader::isPrivate()		const { return header().Private;		}
+bool CHeader::isCopyrighted()	const { return header().Copyright;		}
+bool CHeader::isOriginal()		const { return header().Original;		}
 
-uint CMPEGHeader::getFrameDataOffset() const { return getSize() + getSideInfoSize(); }
+uint CHeader::getFrameDataOffset() const { return getSize() + getSideInfoSize(); }
 
 
-uint CMPEGHeader::getBitrate() const
+uint CHeader::getBitrate() const
 {
 	static const uint index[][3] =
 	{
@@ -158,7 +167,7 @@ uint CMPEGHeader::getBitrate() const
 				  [ header().Bitrate ] * 1000;
 }
 
-uint CMPEGHeader::getSamplingRate() const
+uint CHeader::getSamplingRate() const
 {
 	static const uint frequency[][3] =
 	{
@@ -171,22 +180,14 @@ uint CMPEGHeader::getSamplingRate() const
 }
 
 // ============================================================================
-CMPEGHeader::CMPEGHeader(uint f_header): m_header(f_header) {}
-CMPEGHeader::~CMPEGHeader() {}
-
-CMPEGHeader* CMPEGHeader::gen(uint f_header, void* f_pMem)
+bool CHeader::isValid(uint f_header)
 {
-	const Header& h = (const Header&)f_header;
-	if(!h.isValid())
-		return NULL;
-	if(f_pMem)
-		return new (f_pMem) CMPEGHeader(f_header);
-	else
-		return new CMPEGHeader(f_header);
+	auto& h = reinterpret_cast<const Header&>(f_header);
+	return h.isValid();
 }
 
 
-uint CMPEGHeader::getFrameSize() const
+uint CHeader::getFrameSize() const
 {
 	// Samples Per Frame / 8
 	static const uint SPF8[][3] =
@@ -201,7 +202,7 @@ uint CMPEGHeader::getFrameSize() const
 	return ((SPF8[header().isV2()][i] * getBitrate() / getSamplingRate()) + header().Padding) * slotSize[i];
 }
 
-float CMPEGHeader::getFrameLength() const
+float CHeader::getFrameLength() const
 {
 	static const uint SPF[][3] =
 	{
@@ -212,58 +213,39 @@ float CMPEGHeader::getFrameLength() const
 }
 
 
-bool CMPEGHeader::operator==(const CMPEGHeader& f_header) const
+bool CHeader::operator==(const CHeader& f_header) const
 {
 	return ((m_header & Header::CmpMask) == (f_header.m_header & Header::CmpMask));
 }
 
-bool CMPEGHeader::operator!=(const CMPEGHeader& f_header) const
+bool CHeader::operator!=(const CHeader& f_header) const
 {
 	return !(f_header == *this);
 }
 
 
-uint CMPEGHeader::getSideInfoSize() const
+uint CHeader::getSideInfoSize() const
 {
 	static const uint size[][2] =
 	{
 		{32, 17},
 		{17,  9}
 	};
-	return (header().Layer == Header::Layer3) ? size[header().isV2()][header().Channel == ChannelMono] : 0;
+	return (header().Layer == Header::Layer3)
+		   ? size[header().isV2()][header().Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)]
+		   : 0;
 }
 
 /******************************************************************************
  * Xing Header
  *****************************************************************************/
-#define FOUR_CC(A, B, C, D) \
-	(( (A) & 0xFF)			|\
-	 (((B) & 0xFF) <<  8)	|\
-	 (((C) & 0xFF) << 16)	|\
-	 (((D) & 0xFF) << 24))
-
-uint CXingHeader::getFrameCount()	const { return m_frames;     }
-uint CXingHeader::getByteCount()	const { return m_bytes;      }
-uint CXingHeader::getTOCsOffset()	const { return m_TOCsOffset; }
-uint CXingHeader::getQuality()		const { return m_quality;    }
-
-// ====================================
-CXingHeader* CXingHeader::gen(const uchar* f_pData)
-{
-	uint id = *(const uint*)f_pData;
-	// Xing = VBR & ABR; Info = CBR
-	if(id != FOUR_CC('X','i','n','g') && id != FOUR_CC('I','n','f','o'))
-		return NULL;
-	return new CXingHeader(f_pData);
-}
-
 CXingHeader::CXingHeader(const uchar* f_pData):
 	m_frames(0),
 	m_bytes(0),
 	m_TOCsOffset(0),
 	m_quality(0)
 {
-	const uint* pData = (const uint*)f_pData + 1;
+	auto pData = reinterpret_cast<const uint*>(f_pData) + 1;
 
 	uint mask = *pData;
 	pData++;
@@ -280,8 +262,8 @@ CXingHeader::CXingHeader(const uchar* f_pData):
 	}
 	if(mask & 0x0004)
 	{
-		m_TOCsOffset = /*(uint)*/((const uchar*)pData - f_pData);
-		pData = (const uint*)((const uchar*)pData + 100);
+		m_TOCsOffset = /*(uint)*/(reinterpret_cast<const uchar*>(pData) - f_pData);
+		pData = reinterpret_cast<const uint*>(reinterpret_cast<const uchar*>(pData) + 100);
 	}
 	if(mask & 0x0008)
 	{

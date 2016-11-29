@@ -1,18 +1,46 @@
-#ifndef _MPEG_STREAM_H_
-#define _MPEG_STREAM_H_
-
 #pragma once
+
+#include "common.h"
+#include "mpeg.h"
 
 #include <vector>
 
 
-class CMPEGStream
+class CStream : public MPEG::IStream
 {
-// Declarations
-private:
-	typedef unsigned int	uint;
-	typedef unsigned char	uchar;
+public:
+						CStream			(const uchar* f_data, uint f_size);
+						CStream			() = delete;
+	virtual				~CStream		();
 
+	uint				getSize			() const override { return static_cast<uint>(m_data.size());		}
+	uint				getFrameCount	() const override { return static_cast<uint>(m_frames.size());	}
+	float				getLength		() const override { return m_length;								}
+
+	MPEG::Version		getVersion		() const override { return m_version;		}
+	uint				getLayer		() const override { return m_layer;			}
+	uint				getBitrate		() const override { return m_abr;			}
+	bool				isVBR			() const override { return m_vbr;			}
+	uint				getSamplingRate	() const override { return m_sampling_rate;	}
+	MPEG::ChannelMode	getChannelMode	() const override { return m_channel_mode;	}
+	MPEG::Emphasis		getEmphasis		() const override { return m_emphasis;		}
+
+	uint getFrameOffset(uint f_index) const override
+	{
+		return (f_index < m_frames.size()) ? m_frames[f_index].Offset : (uint)m_data.size();
+	}
+	uint getFrameSize(uint f_index) const override
+	{
+		return (f_index < m_frames.size()) ? m_frames[f_index].Size : 0;
+	}
+	float getFrameTime(uint f_index) const override
+	{
+		return (f_index < m_frames.size()) ? m_frames[f_index].Time : 0.0f;
+	}
+
+	uint				truncate		(uint f_frames) override;
+
+private:
 	struct FrameInfo
 	{
 		FrameInfo(uint f_offset, uint f_size, float f_time):
@@ -26,59 +54,19 @@ private:
 		float	Time;
 	};
 
-// Static Section
-public:
-	static CMPEGStream*	gen(const uchar* f_data, uint f_size);
-
-	static uint calcFirstHeaderOffset(const uchar* f_data, uint f_size);
-	static bool verifyFrameSequence  (const uchar* f_data, uint f_size);
-
-	static bool isIncompleteFrame(const uchar* f_data, uint f_size);
-
 private:
-	static uint findHeader(const uchar* f_data, uint f_size);
+	std::vector<uchar>		m_data;
 
-// Public Section
-public:
-	virtual ~CMPEGStream();
+	float					m_length;
 
-	uint	getSize()					const;
-	uint	getFrameCount()				const;
-	float	getLength()					const;
+	MPEG::Version			m_version;
+	uint					m_layer;
+	uint					m_abr;
+	bool					m_vbr;
+	uint					m_sampling_rate;
+	MPEG::ChannelMode		m_channel_mode;
+	MPEG::Emphasis			m_emphasis;
 
-	const char*	getVersion()		const;
-	uint		getLayer()			const;
-	uint		getBitrate()		const;
-	bool		isVBR()				const;
-	uint		getSamplingRate()	const;
-	const char*	getChannelMode()	const;
-	const char*	getEmphasis()		const;
-
-	uint	getFrameOffset(uint f_index)	const;
-	uint	getFrameSize(uint f_index)		const;
-	float	getFrameTime(uint f_index)		const;
-
-	uint truncate(uint f_frames);
-
-private:
-	CMPEGStream(const uchar* f_data, uint f_size);
-	CMPEGStream();
-
-private:
-	std::vector<uchar> m_data;
-
-	float	m_length;
-
-	uint	m_version;
-	uint	m_layer;
-	uint	m_abr;
-	bool	m_vbr;
-	uint	m_sampling_rate;
-	uint	m_channel_mode;
-	uint	m_emphasis;
-
-	std::vector<FrameInfo> m_frames;
+	std::vector<FrameInfo>	m_frames;
 };
-
-#endif	// _MPEG_STREAM_H_
 

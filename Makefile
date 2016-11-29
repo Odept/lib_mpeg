@@ -1,5 +1,7 @@
 CC = g++
-CFLAGS  = -g -Wall
+CFLAGS  = -std=c++11 -Wall -Wextra -Werror
+CFLAGS += -g3
+#release: CFLAGS += -O3
 
 AR = ar
 ARFLAGS = rvs
@@ -15,8 +17,6 @@ LIBS =
 
 #SRCS = header.cpp
 
-DEPS = common.h
-
 # Below we are replacing the suffix .c of all words in the macro SRCS
 # with the .o suffix
 #OBJS = $(SRCS:.c=.o)
@@ -26,27 +26,36 @@ TARGET_HEADER = header
 TARGET_STREAM = stream
 TEST = test
 
+# Common dependencies
+DEPS = $(TARGET).h common.h
+
 # the first target is executed by default
 default: $(TARGET).a
 
-$(TARGET).a: $(TARGET_HEADER).o $(TARGET_STREAM).o
-	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET_HEADER).o $(TARGET_STREAM).o
-	@echo "###" \"$(TARGET)\" generated
+# Lib
+$(TARGET).a: $(TARGET).o $(TARGET_STREAM).o $(TARGET_HEADER).o
+	@echo "#" generate \"$(TARGET)\" library
+	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET_HEADER).o $(TARGET_STREAM).o $(TARGET).o
+
+$(TARGET).o: $(TARGET).cpp $(TARGET).h $(TARGET_STREAM).h $(TARGET_HEADER).h
+	@echo "#" generate \"$(TARGET)\"
+	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET).cpp $(LFLAGS) $(LIBS)
+
+# Stream
+$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h $(TARGET).h $(DEPS)
+	@echo "#" generate \"$(TARGET_STREAM)\"
+	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
 
 # Header
 $(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h $(DEPS)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
-	@echo "###" \"$(TARGET_HEADER)\" generated
-
-# Stream
-$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h $(DEPS)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
-	@echo "###" \"$(TARGET_STREAM)\" generated
+	@echo "#" generate \"$(TARGET_HEADER)\"
+	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
 
 # Test
-test: $(TEST).cpp $(TARGET).a
+test: $(TEST).cpp $(TARGET).a $(TARGET).h
+	@echo "#" generate \"$(TEST)\"
 	$(CC) $(CFLAGS) -o $(TEST) $(TEST).cpp $(TARGET).a
-	@echo "###" \"$(TEST)\" generated
 
 clean: 
 	$(RM) *.o *~ $(TARGET).a $(TEST)
+	$(RM) -r $(TEST).dSYM

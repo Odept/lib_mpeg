@@ -1,14 +1,20 @@
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#pragma once
 
-#include <cstdlib>
+#include <stdexcept>
 #include <iostream>
 
-#define ASSERT(X) if(!(X)) { std::cout << "Abort @ " << __FILE__ << ":" << __LINE__ << ": \"" << #X << "\"" << std::endl; std::abort(); }
+#define ASSERT(X) if(!(X)) { std::cerr << "Abort @ " << __FILE__ << ":" << __LINE__ << ": \"" << #X << "\"" << std::endl; \
+		throw std::logic_error(#X); \
+	}
 
 #define ERROR(msg) \
 	do { \
 		std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " \
+				  << msg << std::endl; \
+	} while(0)
+#define WARNING(msg) \
+	do { \
+		std::cerr << "WARNING @ " << __FILE__ << ":" << __LINE__ << ": " \
 				  << msg << std::endl; \
 	} while(0)
 
@@ -20,9 +26,7 @@
 	 (((D) & 0xFF) << 24))
 
 
-typedef unsigned int	uint;
-typedef unsigned short	ushort;
-typedef unsigned char	uchar;
-
-#endif // __COMMON_H__
+using uint		= unsigned int;
+using ushort	= unsigned short;
+using uchar		= unsigned char;
 

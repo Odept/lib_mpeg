@@ -8,32 +8,33 @@
 
 void test_header(uint f_val)
 {
-	const CMPEGHeader* pH = CMPEGHeader::gen(f_val);
-	if(!pH)
+	try
 	{
-		std::cout << "Header is not valid" << std::endl;
-		return;
+		const CMPEGHeader h(f_val);
+
+		MPEGVersion ver = h.getVersion();
+
+		std::cout << "Header:        0x"	<< std::hex << f_val << std::dec << std::endl <<
+					 "Version:       "		<< ((ver == MPEGv1) ? "1" : "2") << ((ver == MPEGv25) ? ".5" : "") << std::endl <<
+					 "Layer:         "		<< h.getLayer() << std::endl <<
+					 "Bitrate:       "		<< h.getBitrate() << std::endl <<
+					 "Sampling Rate: "		<< h.getSamplingRate() << std::endl <<
+					 "Protected:     "		<< h.isProtected() << std::endl <<
+					 "Padded:        "		<< h.isPadded() << std::endl <<
+					 "Private:       "		<< h.isPrivate() << std::endl <<
+					 "Copyrighted:   "		<< h.isCopyrighted() << std::endl <<
+					 "Original:      "		<< h.isOriginal() << std::endl <<
+
+					 "Emphasis:     *"		<< h.getEmphasis() << std::endl <<
+					 "Channel:      *"		<< h.getChannelMode() << std::endl <<
+
+					 "Frame size:    "		<< h.getFrameSize() << std::endl <<
+					 "Frame length:  "		<< h.getFrameLength() << std::endl;
 	}
-
-	MPEGVersion ver = pH->getVersion();
-
-	std::cout << "Header:        0x"	<< std::hex << f_val << std::dec << std::endl <<
-				 "Version:       "		<< ((ver == MPEGv1) ? "1" : "2") << ((ver == MPEGv25) ? ".5" : "") << std::endl <<
-				 "Layer:         "		<< pH->getLayer() << std::endl <<
-				 "Bitrate:       "		<< pH->getBitrate() << std::endl <<
-				 "Sampling Rate: "		<< pH->getSamplingRate() << std::endl <<
-				 "Protected:     "		<< pH->isProtected() << std::endl <<
-				 "Padded:        "		<< pH->isPadded() << std::endl <<
-				 "Private:       "		<< pH->isPrivate() << std::endl <<
-				 "Copyrighted:   "		<< pH->isCopyrighted() << std::endl <<
-				 "Original:      "		<< pH->isOriginal() << std::endl <<
-
-				 "Emphasis:     *"		<< pH->getEmphasis() << std::endl <<
-				 "Channel:      *"		<< pH->getChannelMode() << std::endl <<
-
-				 "Frame size:    "		<< pH->getFrameSize() << std::endl <<
-				 "Frame length:  "		<< pH->getFrameLength() << std::endl;
-	delete pH;
+	catch(const std::invalid_argument& e)
+	{
+		ERROR(e.what());
+	}
 }
 
 
@@ -44,7 +45,7 @@ void test_file(const char* f_path)
 	f = fopen(f_path, "rb");
 	if(!f)
 	{
-		std::cout << "Failed to open \"" << f_path << "\"" << std::endl;
+		ERROR("Failed to open \"" << f_path << "\"");
 		return;
 	}
 
@@ -59,20 +60,20 @@ void test_file(const char* f_path)
 		pBuf = new(std::nothrow) unsigned char[fsize];
 		if(!pBuf)
 		{
-			std::cout << "Failed to allocate " << fsize << " bytes" << std::endl;
+			ERROR("Failed to allocate " << fsize << " bytes");
 			break;
 		}
 
 		if(fread(pBuf, fsize, 1, f) != 1)
 		{
-			std::cout << "Failed to read " << fsize << " bytes" << std::endl;
+			ERROR("Failed to read " << fsize << " bytes");
 			break;
 		}
 
 		uint offset = CMPEGStream::calcFirstHeaderOffset(pBuf, fsize);
 		if(offset >= fsize)
 		{
-			std::cout << "Failed to init MPEG stream" << std::endl;
+			ERROR("Failed to init MPEG stream");
 			break;
 		}
 
