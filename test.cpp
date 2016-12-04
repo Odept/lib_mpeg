@@ -1,35 +1,36 @@
 #include "common.h"
 
 #include "header.h"
-#include "stream.h"
+#include "mpeg.h"
 
-#include <stdio.h>
+#include <vector>
+
+
+#define LOG(msg)	std::cout << msg << std::endl
 
 
 void test_header(uint f_val)
 {
 	try
 	{
-		const CMPEGHeader h(f_val);
+		const CHeader h(f_val);
 
-		MPEGVersion ver = h.getVersion();
+		LOG("Header:        0x"	<< std::hex << f_val << std::dec);
+		LOG("Version:       "	<< MPEG::IStream::str(h.getVersion()));
+		LOG("Layer:         "	<< h.getLayer());
+		LOG("Bitrate:       "	<< h.getBitrate());
+		LOG("Sampling Rate: "	<< h.getSamplingRate());
+		LOG("Protected:     "	<< h.isProtected());
+		LOG("Padded:        "	<< h.isPadded());
+		LOG("Private:       "	<< h.isPrivate());
+		LOG("Copyrighted:   "	<< h.isCopyrighted());
+		LOG("Original:      "	<< h.isOriginal());
 
-		std::cout << "Header:        0x"	<< std::hex << f_val << std::dec << std::endl <<
-					 "Version:       "		<< ((ver == MPEGv1) ? "1" : "2") << ((ver == MPEGv25) ? ".5" : "") << std::endl <<
-					 "Layer:         "		<< h.getLayer() << std::endl <<
-					 "Bitrate:       "		<< h.getBitrate() << std::endl <<
-					 "Sampling Rate: "		<< h.getSamplingRate() << std::endl <<
-					 "Protected:     "		<< h.isProtected() << std::endl <<
-					 "Padded:        "		<< h.isPadded() << std::endl <<
-					 "Private:       "		<< h.isPrivate() << std::endl <<
-					 "Copyrighted:   "		<< h.isCopyrighted() << std::endl <<
-					 "Original:      "		<< h.isOriginal() << std::endl <<
+		LOG("Emphasis:      "	<< MPEG::IStream::str(h.getEmphasis()));
+		LOG("Channel:       "	<< MPEG::IStream::str(h.getChannelMode()));
 
-					 "Emphasis:     *"		<< h.getEmphasis() << std::endl <<
-					 "Channel:      *"		<< h.getChannelMode() << std::endl <<
-
-					 "Frame size:    "		<< h.getFrameSize() << std::endl <<
-					 "Frame length:  "		<< h.getFrameLength() << std::endl;
+		LOG("Frame size:    "	<< h.getFrameSize());
+		LOG("Frame length:  "	<< h.getFrameLength());
 	}
 	catch(const std::invalid_argument& e)
 	{
@@ -49,58 +50,49 @@ void test_file(const char* f_path)
 		return;
 	}
 
-	unsigned char* pBuf = NULL;
-	CMPEGStream* pMPEG = NULL;
 	do
 	{
 		fseek(f, 0, SEEK_END);
-		uint fsize = ftell(f);
+		size_t fsize = ftell(f);
 		rewind(f);
 
-		pBuf = new(std::nothrow) unsigned char[fsize];
-		if(!pBuf)
-		{
-			ERROR("Failed to allocate " << fsize << " bytes");
-			break;
-		}
+		std::vector<uchar> buf(fsize);
 
-		if(fread(pBuf, fsize, 1, f) != 1)
+		if(fread(&buf[0], buf.size(), 1, f) != 1)
 		{
 			ERROR("Failed to read " << fsize << " bytes");
 			break;
 		}
 
-		uint offset = CMPEGStream::calcFirstHeaderOffset(pBuf, fsize);
+		auto offset = MPEG::IStream::calcFirstHeaderOffset(&buf[0], buf.size());
 		if(offset >= fsize)
 		{
 			ERROR("Failed to init MPEG stream");
 			break;
 		}
 
-		pMPEG = CMPEGStream::gen(pBuf + offset, fsize - offset);
+		auto mpeg = MPEG::IStream::create(&buf[offset], fsize - offset);
 
-		uint uDataOffset = pMPEG->getFrameOffset(0);
-		std::cout << f_path << std::endl << "================" << std::endl <<
-					 "Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : "") << std::endl <<
-					 "Frames : " << pMPEG->getFrameCount() << std::endl <<
-					 "Length : " << pMPEG->getLength() << std::endl <<
-					 "MPEG " << pMPEG->getVersion() << " Layer " << pMPEG->getLayer() << std::endl <<
-					 "Bitrate      : " << pMPEG->getBitrate() << " kbps" << (pMPEG->isVBR() ? " (VBR)" : "") << std::endl <<
-					 "Sampling Rate: " << pMPEG->getSamplingRate() << " Hz" << std::endl <<
-					 "Channel Mode : " << pMPEG->getChannelMode() << std::endl <<
-					 "Emphasis     : " << pMPEG->getEmphasis() << std::endl;
+		auto uDataOffset = mpeg->getFrameOffset(0);
+		LOG(f_path << std::endl << "================");
+		LOG("Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : ""));
+		LOG("Frames : " << mpeg->getFrameCount());
+		LOG("Length : " << mpeg->getLength());
+		LOG("MPEG " << MPEG::IStream::str(mpeg->getVersion()) << " Layer " << mpeg->getLayer());
+		LOG("Bitrate      : " << mpeg->getBitrate() << " kbps" << (mpeg->isVBR() ? " (VBR)" : ""));
+		LOG("Sampling Rate: " << mpeg->getSamplingRate() << " Hz");
+		LOG("Channel Mode : " << MPEG::IStream::str(mpeg->getChannelMode()));
+		LOG("Emphasis     : " << MPEG::IStream::str(mpeg->getEmphasis()));
 	}
 	while(0);
 
-	delete(pMPEG);
-	delete(pBuf);
 	fclose(f);
 }
 
 int main(int, char**)
 {
 	test_file("test.mp3");
-	std::cout << "================" << std::endl;
+	LOG("================");
 	test_header(0x00A2FBFF);
 
 	return 0;
