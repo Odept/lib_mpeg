@@ -6,12 +6,11 @@
 #include <vector>
 
 
-class CStream : public MPEG::IStream
+class CStream final : public MPEG::IStream
 {
 public:
 						CStream			(const uchar* f_data, uint f_size);
 						CStream			() = delete;
-	virtual				~CStream		();
 
 	uint				getSize			() const override { return static_cast<uint>(m_data.size());		}
 	uint				getFrameCount	() const override { return static_cast<uint>(m_frames.size());	}

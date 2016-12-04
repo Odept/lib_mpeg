@@ -33,9 +33,18 @@ namespace MPEG
 	class IStream
 	{
 	public:
+		static std::shared_ptr<IStream>	create					(const unsigned char* f_data, size_t f_size);
 
-		virtual					~IStream		();
+		static size_t					calcFirstHeaderOffset	(const unsigned char* f_data, size_t f_size);
+		static bool						verifyFrameSequence		(const unsigned char* f_data, size_t f_size);
 
+		static bool						isIncompleteFrame		(const unsigned char* f_data, size_t f_size);
+
+		static const std::string&		str						(Version f_version);
+		static const std::string&		str						(ChannelMode f_mode);
+		static const std::string&		str						(Emphasis f_emphasis);
+
+	public:
 		virtual unsigned int	getSize			() const = 0;
 		virtual unsigned int	getFrameCount	() const = 0;
 		virtual float			getLength		() const = 0;
@@ -55,17 +64,7 @@ namespace MPEG
 		// returns the number of deleted frames
 		virtual unsigned int	truncate		(unsigned int f_frames) = 0;
 
-	public:
-		static std::shared_ptr<IStream>	create					(const unsigned char* f_data, size_t f_size);
-
-		static size_t					calcFirstHeaderOffset	(const unsigned char* f_data, size_t f_size);
-		static bool						verifyFrameSequence		(const unsigned char* f_data, size_t f_size);
-
-		static bool						isIncompleteFrame		(const unsigned char* f_data, size_t f_size);
-
-		static const char*				str						(Version f_version);
-		static const char*				str						(ChannelMode f_mode);
-		static const char*				str						(Emphasis f_emphasis);
+		virtual					~IStream		() {}
 	};
 }
 

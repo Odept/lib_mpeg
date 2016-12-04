@@ -72,8 +72,8 @@ namespace MPEG
 	}
 
 
-	const char* IStream::str(MPEG::Version f_version)	{ return CHeader::str(f_version);	}
-	const char* IStream::str(MPEG::ChannelMode f_mode)	{ return CHeader::str(f_mode);		}
-	const char* IStream::str(MPEG::Emphasis f_emphasis)	{ return CHeader::str(f_emphasis);	}
+	const std::string& IStream::str(MPEG::Version f_version)	{ return CHeader::str(f_version);	}
+	const std::string& IStream::str(MPEG::ChannelMode f_mode)	{ return CHeader::str(f_mode);		}
+	const std::string& IStream::str(MPEG::Emphasis f_emphasis)	{ return CHeader::str(f_emphasis);	}
 }
 

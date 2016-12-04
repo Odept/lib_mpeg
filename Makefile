@@ -22,8 +22,8 @@ LIBS =
 #OBJS = $(SRCS:.c=.o)
 
 TARGET = mpeg
-TARGET_HEADER = header
-TARGET_STREAM = stream
+HEADER = header
+STREAM = stream
 TEST = test
 
 # Common dependencies
@@ -33,23 +33,23 @@ DEPS = $(TARGET).h common.h
 default: $(TARGET).a
 
 # Lib
-$(TARGET).a: $(TARGET).o $(TARGET_STREAM).o $(TARGET_HEADER).o
+$(TARGET).a: $(TARGET).o $(STREAM).o $(HEADER).o
 	@echo "#" generate \"$(TARGET)\" library
-	$(AR) $(ARFLAGS) $(TARGET).a $(TARGET_HEADER).o $(TARGET_STREAM).o $(TARGET).o
+	$(AR) $(ARFLAGS) $(TARGET).a $(HEADER).o $(STREAM).o $(TARGET).o
 
-$(TARGET).o: $(TARGET).cpp $(TARGET).h $(TARGET_STREAM).h $(TARGET_HEADER).h
+$(TARGET).o: $(TARGET).cpp $(TARGET).h $(STREAM).h $(HEADER).h
 	@echo "#" generate \"$(TARGET)\"
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET).cpp $(LFLAGS) $(LIBS)
 
 # Stream
-$(TARGET_STREAM).o: $(TARGET_STREAM).cpp $(TARGET_STREAM).h $(TARGET).h $(DEPS)
-	@echo "#" generate \"$(TARGET_STREAM)\"
-	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET_STREAM).cpp $(LFLAGS) $(LIBS)
+$(STREAM).o: $(STREAM).cpp $(STREAM).h $(TARGET).h $(DEPS)
+	@echo "#" generate \"$(STREAM)\"
+	$(CC) $(CFLAGS) -c $(INCLUDES) $(STREAM).cpp $(LFLAGS) $(LIBS)
 
 # Header
-$(TARGET_HEADER).o: $(TARGET_HEADER).cpp $(TARGET_HEADER).h $(DEPS)
-	@echo "#" generate \"$(TARGET_HEADER)\"
-	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET_HEADER).cpp $(LFLAGS) $(LIBS)
+$(HEADER).o: $(HEADER).cpp $(HEADER).h $(DEPS)
+	@echo "#" generate \"$(HEADER)\"
+	$(CC) $(CFLAGS) -c $(INCLUDES) $(HEADER).cpp $(LFLAGS) $(LIBS)
 
 # Test
 test: $(TEST).cpp $(TARGET).a $(TARGET).h

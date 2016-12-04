@@ -5,41 +5,37 @@
 
 // ====================================
 // MPEG Header
-struct Header;
-
-class CHeader
+class CHeader final
 {
 public:
-	static bool			isValid				(uint f_header);
+	static bool					isValid				(uint f_header);
 
-	static uint			getSize				();
+	static size_t				getSize				();
 
-	static const char*	str					(MPEG::Version		f_ver);
-	static const char*	str					(MPEG::ChannelMode	f_mode);
-	static const char*	str					(MPEG::Emphasis		f_emphasis);
+	static const std::string&	str					(MPEG::Version		f_ver);
+	static const std::string&	str					(MPEG::ChannelMode	f_mode);
+	static const std::string&	str					(MPEG::Emphasis		f_emphasis);
 
 public:
-	// Basic
-						CHeader				(uint f_header): m_header(f_header) {}
-						CHeader				() = delete;
-	virtual				~CHeader			();
+								CHeader				(uint f_header): m_header(f_header) {}
+								CHeader				() = delete;
 
-	MPEG::Version		getVersion			() const;
-	uint				getLayer			() const;
-	bool				isProtected			() const;
-	uint				getBitrate			() const;
-	uint				getSamplingRate		() const;
-	bool				isPadded			() const;
-	bool				isPrivate			() const;
-	MPEG::ChannelMode	getChannelMode		() const;
-	bool				isCopyrighted		() const;
-	bool				isOriginal			() const;
-	MPEG::Emphasis		getEmphasis			() const;
+	MPEG::Version				getVersion			() const;
+	uint						getLayer			() const;
+	bool						isProtected			() const;
+	uint						getBitrate			() const;
+	uint						getSamplingRate		() const;
+	bool						isPadded			() const;
+	bool						isPrivate			() const;
+	MPEG::ChannelMode			getChannelMode		() const;
+	bool						isCopyrighted		() const;
+	bool						isOriginal			() const;
+	MPEG::Emphasis				getEmphasis			() const;
 
 	// Complex
-	uint				getFrameSize		() const;
-	float				getFrameLength		() const;
-	uint				getFrameDataOffset	() const;
+	uint						getFrameSize		() const;
+	float						getFrameLength		() const;
+	uint						getFrameDataOffset	() const;
 
 	// version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
 	bool operator==(const CHeader& f_header) const;
@@ -49,9 +45,9 @@ public:
 
 	// Private methods
 private:
-	const Header&		header				() const;
+	const struct Header&		header				() const;
 
-	uint				getSideInfoSize		() const;
+	uint						getSideInfoSize		() const;
 
 private:
 	uint m_header;

@@ -107,26 +107,26 @@ struct Header
 /******************************************************************************
  * MPEG Header
  *****************************************************************************/
-uint CHeader::getSize() { return sizeof(Header); }
+size_t CHeader::getSize() { return sizeof(Header); }
 
-const char* CHeader::str(MPEG::Version f_ver)
+const std::string& CHeader::str(MPEG::Version f_ver)
 {
-	static const char* ver[] = {"2.5", "", "2", "1"};
-	unsigned i = static_cast<unsigned>(f_ver);
+	static std::string ver[] = {"2.5", "", "2", "1"};
+	auto i = static_cast<unsigned>(f_ver);
 	ASSERT(i < (sizeof(ver) / sizeof(*ver)));
 	return ver[i];
 }
-const char* CHeader::str(MPEG::ChannelMode f_mode)
+const std::string& CHeader::str(MPEG::ChannelMode f_mode)
 {
-	static const char* mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
-	unsigned i = static_cast<unsigned>(f_mode);
+	static std::string mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
+	auto i = static_cast<unsigned>(f_mode);
 	ASSERT(i < (sizeof(mode) / sizeof(*mode)));
 	return mode[i];
 }
-const char* CHeader::str(MPEG::Emphasis f_emphasis)
+const std::string& CHeader::str(MPEG::Emphasis f_emphasis)
 {
-	static const char* emphasis[] = {"", "50/15", "", "CCIT J.17"};
-	unsigned i = static_cast<unsigned>(f_emphasis);
+	static std::string emphasis[] = {"", "50/15", "", "CCIT J.17"};
+	auto i = static_cast<unsigned>(f_emphasis);
 	ASSERT(i < (sizeof(emphasis) / sizeof(*emphasis)));
 	return emphasis[i];
 }
