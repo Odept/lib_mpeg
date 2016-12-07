@@ -125,7 +125,7 @@ const std::string& CHeader::str(MPEG::ChannelMode f_mode)
 }
 const std::string& CHeader::str(MPEG::Emphasis f_emphasis)
 {
-	static std::string emphasis[] = {"", "50/15", "", "CCIT J.17"};
+	static std::string emphasis[] = {"None", "50/15", "", "CCIT J.17"};
 	auto i = static_cast<unsigned>(f_emphasis);
 	ASSERT(i < (sizeof(emphasis) / sizeof(*emphasis)));
 	return emphasis[i];
