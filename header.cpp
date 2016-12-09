@@ -239,36 +239,58 @@ uint CHeader::getSideInfoSize() const
 /******************************************************************************
  * Xing Header
  *****************************************************************************/
-CXingHeader::CXingHeader(const uchar* f_pData):
+static uint fromBigEndian(const uint* f_pBE)
+{
+	auto p = reinterpret_cast<const uchar*>(f_pBE);
+	return (static_cast<uint>(p[0]) << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+}
+
+CXingHeader::CXingHeader(const uchar* f_data, size_t f_size):
+	m_vbr(false),
 	m_frames(0),
 	m_bytes(0),
 	m_TOCsOffset(0),
-	m_quality(0)
+	m_quality(0),
+	m_modified(false)
 {
-	auto pData = reinterpret_cast<const uint*>(f_pData) + 1;
+	auto nextFrame = f_data + f_size;
 
-	uint mask = *pData;
-	pData++;
+	ASSERT(f_size >= sizeof(uint));
+	CHeader header(*reinterpret_cast<const uint*>(f_data));
 
-	if(mask & 0x0001)
+	auto pData = reinterpret_cast<const uint*>(f_data + header.getFrameDataOffset());
+
+	ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
+	m_vbr = isVBR(*pData);
+	++pData;
+
+	ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
+	m_flags = fromBigEndian(pData);
+	++pData;
+
+	if(m_flags & static_cast<uint>(Flags::Frames))
 	{
-		m_frames = *pData;
-		pData++;
+		ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
+		m_frames = fromBigEndian(pData);
+		++pData;
 	}
-	if(mask & 0x0002)
+	if(m_flags & static_cast<uint>(Flags::Bytes))
 	{
-		m_bytes = *pData;
-		pData++;
+		ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
+		m_bytes = fromBigEndian(pData);
+		++pData;
 	}
-	if(mask & 0x0004)
+	if(m_flags & static_cast<uint>(Flags::TOC))
 	{
-		m_TOCsOffset = /*(uint)*/(reinterpret_cast<const uchar*>(pData) - f_pData);
+		ASSERT(reinterpret_cast<const uchar*>(pData) + 100 <= nextFrame);
+		m_TOCsOffset = reinterpret_cast<const uchar*>(pData) - f_data;
 		pData = reinterpret_cast<const uint*>(reinterpret_cast<const uchar*>(pData) + 100);
 	}
-	if(mask & 0x0008)
+	if(m_flags & static_cast<uint>(Flags::Quality))
 	{
-		m_quality = *pData;
-		//pData++;
+		ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
+		m_quality = fromBigEndian(pData);
+		//++pData;
 	}
 }
 

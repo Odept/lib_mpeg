@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS  = -std=c++11 -Wall -Wextra -Werror
+CFLAGS  = -std=c++14 -Wall -Wextra -Werror
 CFLAGS += -g3
 #release: CFLAGS += -O3
 
@@ -42,7 +42,7 @@ $(TARGET).o: $(TARGET).cpp $(TARGET).h $(STREAM).h $(HEADER).h
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET).cpp $(LFLAGS) $(LIBS)
 
 # Stream
-$(STREAM).o: $(STREAM).cpp $(STREAM).h $(TARGET).h $(DEPS)
+$(STREAM).o: $(STREAM).cpp $(STREAM).h $(TARGET).h $(HEADER).h $(DEPS)
 	@echo "#" generate \"$(STREAM)\"
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(STREAM).cpp $(LFLAGS) $(LIBS)
 

@@ -6,18 +6,10 @@
 #define ASSERT(X) if(!(X)) { std::cerr << "Abort @ " << __FILE__ << ":" << __LINE__ << ": \"" << #X << "\"" << std::endl; \
 		throw std::logic_error(#X); \
 	}
+#define ERROR(msg)		do { std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " << msg << std::endl; } while(0)
+#define WARNING(msg)	do { std::cerr << "WARNING @ " << __FILE__ << ":" << __LINE__ << ": " << msg << std::endl; } while(0)
 
-#define ERROR(msg) \
-	do { \
-		std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " \
-				  << msg << std::endl; \
-	} while(0)
-#define WARNING(msg) \
-	do { \
-		std::cerr << "WARNING @ " << __FILE__ << ":" << __LINE__ << ": " \
-				  << msg << std::endl; \
-	} while(0)
-
+#define OUT_HEX(num)	std::hex << (num) << std::dec
 
 #define FOUR_CC(A, B, C, D)	 \
 	(( (A) & 0xFF)			|\
