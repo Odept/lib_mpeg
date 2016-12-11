@@ -1,7 +1,7 @@
 #pragma once
 
+#include "header_raw.h"
 #include "common.h"
-#include "mpeg.h"
 
 #include <vector>
 
@@ -10,9 +10,13 @@
 class CHeader final
 {
 public:
-	static bool					isValid				(uint f_header);
+	static bool					isValid				(uint f_header)
+	{
+		auto& h = reinterpret_cast<const Header&>(f_header);
+		return h.isValid();
+	}
 
-	static size_t				getSize				();
+	static size_t				getSize				() { return sizeof(m_header); }
 
 	static const std::string&	str					(MPEG::Version		f_ver);
 	static const std::string&	str					(MPEG::ChannelMode	f_mode);
@@ -22,41 +26,39 @@ public:
 								CHeader				(uint f_header): m_header(f_header) {}
 								CHeader				() = delete;
 
-	MPEG::Version				getVersion			() const;
-	uint						getLayer			() const;
-	bool						isProtected			() const;
+	MPEG::Version				getVersion			() const { return static_cast<MPEG::Version>(m_header.Version); }
+	uint						getLayer			() const { return 4 - m_header.Layer; }
+	bool						isProtected			() const { return m_header.isProtected(); }
 	uint						getBitrate			() const;
 	uint						getSamplingRate		() const;
-	bool						isPadded			() const;
-	bool						isPrivate			() const;
-	MPEG::ChannelMode			getChannelMode		() const;
-	bool						isCopyrighted		() const;
-	bool						isOriginal			() const;
-	MPEG::Emphasis				getEmphasis			() const;
+	bool						isPadded			() const { return m_header.Padding; }
+	bool						isPrivate			() const { return m_header.Private; }
+	MPEG::ChannelMode			getChannelMode		() const { return static_cast<MPEG::ChannelMode>(m_header.Channel); }
+	bool						isCopyrighted		() const { return m_header.Copyright; }
+	bool						isOriginal			() const { return m_header.Original; }
+	MPEG::Emphasis				getEmphasis			() const { return static_cast<MPEG::Emphasis>(m_header.Emphasis); }
 
 	// Complex
 	uint						getFrameSize		() const;
 	float						getFrameLength		() const;
-	uint						getFrameDataOffset	() const;
+	uint						getFrameDataOffset	() const { return getSize() + getSideInfoSize(); }
 
-	// version, layer, sampling rate, channel mode, emphasis (________ ___xxxx_ ____xx__ xx____xx)
-	bool operator==(const CHeader& f_header) const;
-	bool operator!=(const CHeader& f_header) const;
-
-	// XING / VBRI header is in the 1-st frame after side information block (layer 3 only)
+	bool						operator==			(const CHeader& f_header) const { return (m_header == f_header.m_header); }
+	bool						operator!=			(const CHeader& f_header) const { return !(*this == f_header); }
 
 	// Private methods
 private:
-	const struct Header&		header				() const;
+	const Header&				header				() const { return m_header; }
 
 	uint						getSideInfoSize		() const;
 
 private:
-	uint m_header;
+	Header m_header;
 };
 
 // ====================================
 // Xing Header (Zone A)
+// XING / VBRI header is in the 1-st frame after a side information block (layer 3 only)
 // https://www.codeproject.com/articles/8295/mpeg-audio-frame-header#XINGHeader
 class CXingHeader
 {

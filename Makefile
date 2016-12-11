@@ -27,7 +27,7 @@ STREAM = stream
 TEST = test
 
 # Common dependencies
-DEPS = $(TARGET).h common.h
+DEPS = $(TARGET).h $(HEADER).h $(HEADER)_raw.h common.h
 
 # the first target is executed by default
 default: $(TARGET).a
@@ -37,17 +37,17 @@ $(TARGET).a: $(TARGET).o $(STREAM).o $(HEADER).o
 	@echo "#" generate \"$(TARGET)\" library
 	$(AR) $(ARFLAGS) $(TARGET).a $(HEADER).o $(STREAM).o $(TARGET).o
 
-$(TARGET).o: $(TARGET).cpp $(TARGET).h $(STREAM).h $(HEADER).h
+$(TARGET).o: $(TARGET).cpp $(STREAM).h $(DEPS)
 	@echo "#" generate \"$(TARGET)\"
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(TARGET).cpp $(LFLAGS) $(LIBS)
 
 # Stream
-$(STREAM).o: $(STREAM).cpp $(STREAM).h $(TARGET).h $(HEADER).h $(DEPS)
+$(STREAM).o: $(STREAM).cpp $(STREAM).h $(DEPS)
 	@echo "#" generate \"$(STREAM)\"
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(STREAM).cpp $(LFLAGS) $(LIBS)
 
 # Header
-$(HEADER).o: $(HEADER).cpp $(HEADER).h $(DEPS)
+$(HEADER).o: $(HEADER).cpp $(DEPS)
 	@echo "#" generate \"$(HEADER)\"
 	$(CC) $(CFLAGS) -c $(INCLUDES) $(HEADER).cpp $(LFLAGS) $(LIBS)
 

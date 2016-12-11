@@ -3,149 +3,32 @@
 #include "common.h"
 
 
-struct Header
-{
-	// For simplicity, don't use scoped enum for internal enums
-	enum
-	{
-		LayerReserved	= 0,
-		Layer3			= 1,
-		Layer2			= 2,
-		Layer1			= 3
-	};
-
-	enum
-	{
-		BitrateFree	= 0x0,
-		BitrateBad	= 0xF
-	};
-
-	enum { SamplingRateReserved = 3 };
-
-	// Constants
-	static const uint SyncMask = 0xE0FF;
-
-	// version, layer, sampling rate, channel mode, emphasis
-	// (________  ___xxxx_  ____xx__  xx____xx)
-	static const uint CmpMask = 0xC30C1E00;
-
-	// 11111111 111VVLLP BBBBSS_p CCXX@OEE
-	union
-	{
-		struct
-		{
-			uint Sync0		: 8;
-
-			uint Protection	: 1;
-			uint Layer		: 2;
-			uint Version	: 2;
-			uint Sync1		: 3;
-
-			uint Private	: 1;
-			uint Padding	: 1;
-			uint Sampling	: 2;
-			uint Bitrate	: 4;
-
-			uint Emphasis	: 2;
-			uint Original	: 1;
-			uint Copyright	: 1;
-			uint Extension	: 2;
-			uint Channel	: 2;
-		};
-		unsigned int uCell;
-	};
-
-	// ================================
-	bool isValid() const
-	{
-		if((uCell & SyncMask) != SyncMask)
-			return false;
-
-		if(Version	== static_cast<unsigned>(MPEG::Version::vReserved)	||
-		   Layer	== LayerReserved									||
-		   Bitrate	== BitrateFree										||
-		   Bitrate	== BitrateBad										||
-		   Sampling	== SamplingRateReserved								||
-		   Emphasis	== static_cast<unsigned>(MPEG::Emphasis::Reserved))
-			return false;
-
-		// MPEG 1, layer 2 additional mode check
-		if(Version != static_cast<unsigned>(MPEG::Version::v1) || Layer != Layer2)
-			return true;
-
-		static const bool consistent[][16] =
-		{
-			{ true,  true},	// free
-			{false,  true},	// 32
-			{false,  true},	// 48
-			{false,  true},	// 56
-			{ true,  true},	// 64
-			{false,  true},	// 80
-			{ true,  true},	// 96
-			{ true,  true},	// 112
-			{ true,  true},	// 128
-			{ true,  true},	// 160
-			{ true,  true},	// 192
-			{ true, false},	// 224
-			{ true, false},	// 256
-			{ true, false},	// 320
-			{ true, false},	// 384
-			{false, false}	// reserved
-		};
-		return consistent[Bitrate][Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)];
-	}
-
-	bool isV2() const
-	{
-		return (Version == static_cast<unsigned>(MPEG::Version::v2) ||
-				Version == static_cast<unsigned>(MPEG::Version::v25));
-	}
-
-	bool isProtected() const { return !Protection;	}
-};
-
 /******************************************************************************
  * MPEG Header
  *****************************************************************************/
-size_t CHeader::getSize() { return sizeof(Header); }
-
 const std::string& CHeader::str(MPEG::Version f_ver)
 {
-	static std::string ver[] = {"2.5", "", "2", "1"};
+	static const std::string ver[] = {"2.5", "", "2", "1"};
 	auto i = static_cast<unsigned>(f_ver);
 	ASSERT(i < (sizeof(ver) / sizeof(*ver)));
 	return ver[i];
 }
+
 const std::string& CHeader::str(MPEG::ChannelMode f_mode)
 {
-	static std::string mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
+	static const std::string mode[] = {"Stereo", "Joint Stereo", "Dual Channel", "Mono"};
 	auto i = static_cast<unsigned>(f_mode);
 	ASSERT(i < (sizeof(mode) / sizeof(*mode)));
 	return mode[i];
 }
+
 const std::string& CHeader::str(MPEG::Emphasis f_emphasis)
 {
-	static std::string emphasis[] = {"None", "50/15", "", "CCIT J.17"};
+	static const std::string emphasis[] = {"None", "50/15", "", "CCIT J.17"};
 	auto i = static_cast<unsigned>(f_emphasis);
 	ASSERT(i < (sizeof(emphasis) / sizeof(*emphasis)));
 	return emphasis[i];
 }
-
-// ====================================
-const Header& CHeader::header() const { return (const Header&)m_header; }
-
-MPEG::Version		CHeader::getVersion()		const { return static_cast<MPEG::Version>	(header().Version);		}
-uint				CHeader::getLayer()			const { return							 4 - header().Layer;		}
-MPEG::ChannelMode	CHeader::getChannelMode()	const { return static_cast<MPEG::ChannelMode>(header().Channel);	}
-MPEG::Emphasis		CHeader::getEmphasis()		const { return static_cast<MPEG::Emphasis>	(header().Emphasis);	}
-
-bool CHeader::isProtected()		const { return header().isProtected();	}
-bool CHeader::isPadded()		const { return header().Padding;		}
-bool CHeader::isPrivate()		const { return header().Private;		}
-bool CHeader::isCopyrighted()	const { return header().Copyright;		}
-bool CHeader::isOriginal()		const { return header().Original;		}
-
-uint CHeader::getFrameDataOffset() const { return getSize() + getSideInfoSize(); }
 
 
 uint CHeader::getBitrate() const
@@ -167,6 +50,7 @@ uint CHeader::getBitrate() const
 				  [ header().Bitrate ] * 1000;
 }
 
+
 uint CHeader::getSamplingRate() const
 {
 	static const uint frequency[][3] =
@@ -177,13 +61,6 @@ uint CHeader::getSamplingRate() const
 		{44100, 48000, 32000}
 	};
 	return frequency[header().Version][header().Sampling];
-}
-
-// ============================================================================
-bool CHeader::isValid(uint f_header)
-{
-	auto& h = reinterpret_cast<const Header&>(f_header);
-	return h.isValid();
 }
 
 
@@ -202,6 +79,7 @@ uint CHeader::getFrameSize() const
 	return ((SPF8[header().isV2()][i] * getBitrate() / getSamplingRate()) + header().Padding) * slotSize[i];
 }
 
+
 float CHeader::getFrameLength() const
 {
 	static const uint SPF[][3] =
@@ -210,17 +88,6 @@ float CHeader::getFrameLength() const
 		{ 576, 1152, 384}
 	};
 	return SPF[header().isV2()][header().Layer - 1] / (float)getSamplingRate();
-}
-
-
-bool CHeader::operator==(const CHeader& f_header) const
-{
-	return ((m_header & Header::CmpMask) == (f_header.m_header & Header::CmpMask));
-}
-
-bool CHeader::operator!=(const CHeader& f_header) const
-{
-	return !(f_header == *this);
 }
 
 
