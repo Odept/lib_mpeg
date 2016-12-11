@@ -57,8 +57,6 @@ private:
 	};
 
 private:
-	std::vector<uchar>			m_data;
-
 	float						m_length;
 
 	MPEG::Version				m_version;
@@ -71,6 +69,7 @@ private:
 
 	std::unique_ptr<CXingFrame>	m_xing;
 	std::vector<FrameInfo>		m_frames;
+	std::vector<uchar>			m_data;
 
 	uint						m_warnings;
 };

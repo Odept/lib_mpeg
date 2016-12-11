@@ -58,6 +58,7 @@ CStream::CStream(const uchar* f_data, uint f_size):
 		if(!m_vbr && br != bitrate)
 			m_vbr = true;
 	}
+	m_abr /= m_frames.size();
 
 	// Copy all frame data
 	m_data.resize(offset);
@@ -74,8 +75,6 @@ CStream::CStream(const uchar* f_data, uint f_size):
 		if(h.getByteCount() != offset)
 			WARNING("XING: stream size mismatch (expected " << h.getByteCount() << ", actual " << offset << ')');
 	}
-
-	m_abr /= m_frames.size();
 }
 
 
