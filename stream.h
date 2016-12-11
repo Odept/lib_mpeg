@@ -12,6 +12,7 @@ class CStream final : public MPEG::IStream
 public:
 						CStream			(const uchar* f_data, uint f_size);
 						CStream			() = delete;
+	bool				hasWarnings		() const final override { return m_warnings; }
 
 	size_t				getSize			() const final override { return m_data.size();		}
 	uint				getFrameCount	() const final override { return static_cast<uint>(m_frames.size()); }
@@ -38,6 +39,7 @@ public:
 		return (f_index < m_frames.size()) ? m_frames[f_index].Time : 0.0f;
 	}
 
+	// Functional
 	uint				truncate		(uint f_frames) final override;
 
 private:
@@ -69,5 +71,7 @@ private:
 
 	std::unique_ptr<CXingFrame>	m_xing;
 	std::vector<FrameInfo>		m_frames;
+
+	uint						m_warnings;
 };
 

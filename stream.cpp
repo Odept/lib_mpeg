@@ -8,7 +8,8 @@
 CStream::CStream(const uchar* f_data, uint f_size):
 	m_length(0.0f),
 	m_abr(0),
-	m_vbr(false)
+	m_vbr(false),
+	m_warnings(0)
 {
 	size_t offset = 0;
 

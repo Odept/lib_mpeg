@@ -7,6 +7,7 @@
 
 
 #define LOG(msg)	std::cout << msg << std::endl
+#define ERROR(msg)	do { std::cerr << "ERROR @ " << __FILE__ << ":" << __LINE__ << ": " << msg << std::endl; } while(0)
 
 
 void test_header(uint f_val)
