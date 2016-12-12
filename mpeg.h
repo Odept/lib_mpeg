@@ -66,7 +66,7 @@ namespace MPEG
 		// returns the number of deleted frames
 		virtual unsigned int	truncate		(unsigned int f_frames) = 0;
 
-		virtual					~IStream		() {}
+		virtual					~IStream		();
 	};
 }
 
