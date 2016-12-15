@@ -67,7 +67,11 @@ namespace MPEG
 		if(f_size < CHeader::getSize())
 			return false;
 
-		CHeader header( *reinterpret_cast<const uint*>(f_data) );
+		auto rawHeader = *reinterpret_cast<const uint*>(f_data);
+		if(!CHeader::isValid(rawHeader))
+			return false;
+
+		CHeader header(rawHeader);
 		return (header.getFrameSize() > f_size);
 	}
 
