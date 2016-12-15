@@ -46,8 +46,8 @@ uint CHeader::getBitrate() const
 		{0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
 		{0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160, 0}
 	};
-	return bitrate[ index[header().isV2()][getLayer() - 1] ]
-				  [ header().Bitrate ] * 1000;
+	return bitrate[ index[m_header.isV2()][getLayer() - 1] ]
+				  [ m_header.Bitrate ] * 1000;
 }
 
 
@@ -60,7 +60,7 @@ uint CHeader::getSamplingRate() const
 		{22050, 24000, 16000},
 		{44100, 48000, 32000}
 	};
-	return frequency[header().Version][header().Sampling];
+	return frequency[m_header.Version][m_header.Sampling];
 }
 
 
@@ -75,8 +75,8 @@ uint CHeader::getFrameSize() const
 	};
 	static const uint slotSize[] = {1, 1, 4};
 
-	uint i = header().Layer - 1;
-	return ((SPF8[header().isV2()][i] * getBitrate() / getSamplingRate()) + header().Padding) * slotSize[i];
+	uint i = m_header.Layer - 1;
+	return ((SPF8[m_header.isV2()][i] * getBitrate() / getSamplingRate()) + m_header.Padding) * slotSize[i];
 }
 
 
@@ -87,7 +87,7 @@ float CHeader::getFrameLength() const
 		{1152, 1152, 384},
 		{ 576, 1152, 384}
 	};
-	return SPF[header().isV2()][header().Layer - 1] / (float)getSamplingRate();
+	return SPF[m_header.isV2()][m_header.Layer - 1] / (float)getSamplingRate();
 }
 
 
@@ -98,8 +98,8 @@ uint CHeader::getSideInfoSize() const
 		{32, 17},
 		{17,  9}
 	};
-	return (header().Layer == Header::Layer3)
-		   ? size[header().isV2()][header().Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)]
+	return (m_header.Layer == Header::Layer3)
+		   ? size[m_header.isV2()][m_header.Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)]
 		   : 0;
 }
 

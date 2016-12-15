@@ -48,8 +48,6 @@ public:
 
 	// Private methods
 private:
-	const Header&				header				() const { return m_header; }
-
 	uint						getSideInfoSize		() const;
 
 private:
