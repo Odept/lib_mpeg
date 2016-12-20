@@ -32,9 +32,11 @@ DEPS = $(TARGET).h $(HEADER).h $(HEADER)_raw.h common.h
 # the first target is executed by default
 default: $(TARGET).a
 
-# Lib
+# Archive
 $(TARGET).a: $(TARGET).o $(STREAM).o $(HEADER).o
-	@echo "#" generate \"$(TARGET)\" library
+	# Delete an old archive to avoid strange warnings
+	rm $(TARGET).a
+	@echo "#" generate \"$(TARGET)\" archive
 	$(AR) $(ARFLAGS) $(TARGET).a $(HEADER).o $(STREAM).o $(TARGET).o
 
 $(TARGET).o: $(TARGET).cpp $(STREAM).h $(DEPS)

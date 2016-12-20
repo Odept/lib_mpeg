@@ -24,21 +24,23 @@ const std::string& CHeader::str(MPEG::ChannelMode f_mode)
 
 const std::string& CHeader::str(MPEG::Emphasis f_emphasis)
 {
-	static const std::string emphasis[] = {"None", "50/15", "", "CCIT J.17"};
-	auto i = static_cast<unsigned>(f_emphasis);
-	ASSERT(i < (sizeof(emphasis) / sizeof(*emphasis)));
-	return emphasis[i];
+	static const std::string s_emphasis[] = {"None", "50/15", "", "CCIT J.17"};
+	auto i = static_cast<uint>(f_emphasis);
+	ASSERT(i < (sizeof(s_emphasis) / sizeof(*s_emphasis)));
+	return s_emphasis[i];
 }
 
 
-uint CHeader::getBitrate() const
+uint CHeader::getBitrate(uint f_rawIndex) const
 {
-	static const uint index[][3] =
+	ASSERT(f_rawIndex < Header::BitrateBad);
+
+	static const uint s_index[][3] =
 	{
 		{0, 1, 2},
 		{3, 4, 4}
 	};
-	static const uint bitrate[][16] =
+	static const uint s_bitrate[][16] =
 	{
 		{0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 0},
 		{0, 32, 48, 56,  64,  80,  96, 112, 128, 160, 192, 224, 256, 320, 384, 0},
@@ -46,60 +48,95 @@ uint CHeader::getBitrate() const
 		{0, 32, 48, 56,  64,  80,  96, 112, 128, 144, 160, 176, 192, 224, 256, 0},
 		{0,  8, 16, 24,  32,  40,  48,  56,  64,  80,  96, 112, 128, 144, 160, 0}
 	};
-	return bitrate[ index[m_header.isV2()][getLayer() - 1] ]
-				  [ m_header.Bitrate ] * 1000;
+	return s_bitrate[ s_index[m_header.isV2()][getLayer() - 1] ]
+					[ f_rawIndex ] * 1000;
 }
 
 
 uint CHeader::getSamplingRate() const
 {
-	static const uint frequency[][3] =
+	static const uint s_frequency[][3] =
 	{
 		{11025, 12000,  8000},
 		{    0,     0,     0},
 		{22050, 24000, 16000},
 		{44100, 48000, 32000}
 	};
-	return frequency[m_header.Version][m_header.Sampling];
+	ASSERT(m_header.Sampling != Header::SamplingRateReserved);
+	return s_frequency[m_header.Version][m_header.Sampling];
 }
 
 
-uint CHeader::getFrameSize() const
+// Samples Per Frame / 8
+static const uint s_SPF8[][3] =
 {
-	// Samples Per Frame / 8
-	static const uint SPF8[][3] =
-	{
-		// 12 must be multiplied by 4 because of slot size
-		{144, 144, 12},
-		{ 72, 144, 12}
-	};
-	static const uint slotSize[] = {1, 1, 4};
+	// 12 must be multiplied by 4 because of slot size
+	{144, 144, 12},
+	{ 72, 144, 12}
+};
+static const uint s_slotSize[] = {1, 1, 4};
 
+uint CHeader::getFrameSize(uint f_bitrate) const
+{
 	uint i = m_header.Layer - 1;
-	return ((SPF8[m_header.isV2()][i] * getBitrate() / getSamplingRate()) + m_header.Padding) * slotSize[i];
+	return ((s_SPF8[m_header.isV2()][i] * f_bitrate / getSamplingRate()) + m_header.Padding) * s_slotSize[i];
+}
+
+uint CHeader::calcFrameSize(const uchar* f_data, size_t f_size)
+{
+	ASSERT(isFreeBitrate());
+
+	// Calc max frame size
+	auto maxBitrate = getBitrate(Header::BitrateBad - 1);
+	auto size = getFrameSize(maxBitrate);
+	if(size > f_size)
+		size = static_cast<uint>(f_size);
+
+	for(size_t o = CHeader::getSize(); o + CHeader::getSize() <= size; ++o)
+	{
+		auto rawHeader = *reinterpret_cast<const uint*>(f_data + o);
+		if(CHeader::isValid(rawHeader) && isValidSize(o))
+			return o;
+	}
+
+	return 0;
+}
+
+bool CHeader::isValidSize(uint f_size) const
+{
+	uint i = m_header.Layer - 1;
+
+	auto x = f_size / s_slotSize[i];
+	if(x * s_slotSize[i] != f_size)
+		return false;
+
+	auto spf8 = s_SPF8[m_header.isV2()][i];
+	x = (x - m_header.Padding) * getSamplingRate();
+	auto y = x / spf8;
+	return (y * spf8 == x);
 }
 
 
 float CHeader::getFrameLength() const
 {
-	static const uint SPF[][3] =
+	static const float s_SPF[][3] =
 	{
-		{1152, 1152, 384},
-		{ 576, 1152, 384}
+		{1152.0, 1152.0, 384.0},
+		{ 576.0, 1152.0, 384.0}
 	};
-	return SPF[m_header.isV2()][m_header.Layer - 1] / (float)getSamplingRate();
+	return s_SPF[m_header.isV2()][m_header.Layer - 1] / getSamplingRate();
 }
 
 
 uint CHeader::getSideInfoSize() const
 {
-	static const uint size[][2] =
+	static const uint s_size[][2] =
 	{
 		{32, 17},
 		{17,  9}
 	};
 	return (m_header.Layer == Header::Layer3)
-		   ? size[m_header.isV2()][m_header.Channel == static_cast<unsigned>(MPEG::ChannelMode::Mono)]
+		   ? s_size[m_header.isV2()][m_header.Channel == static_cast<uint>(MPEG::ChannelMode::Mono)]
 		   : 0;
 }
 
@@ -124,6 +161,7 @@ CXingHeader::CXingHeader(const uchar* f_data, size_t f_size):
 
 	ASSERT(f_size >= sizeof(uint));
 	CHeader header(*reinterpret_cast<const uint*>(f_data));
+	ASSERT(!header.isFreeBitrate());
 
 	auto pData = reinterpret_cast<const uint*>(f_data + header.getFrameDataOffset());
 

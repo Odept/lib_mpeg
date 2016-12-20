@@ -30,7 +30,7 @@ void test_header(uint f_val)
 		LOG("Emphasis:      "	<< MPEG::IStream::str(h.getEmphasis()));
 		LOG("Channel:       "	<< MPEG::IStream::str(h.getChannelMode()));
 
-		LOG("Frame size:    "	<< h.getFrameSize());
+		LOG("Frame size:    "	<< (h.isFreeBitrate() ? 0 : h.getFrameSize()));
 		LOG("Frame length:  "	<< h.getFrameLength());
 	}
 	catch(const std::invalid_argument& e)
@@ -92,9 +92,14 @@ void test_file(const char* f_path)
 
 int main(int, char**)
 {
-	test_file("test.mp3");
+	//test_header(0x00A2FBFF);
+	test_header(0x1B00FBFF);
+	//LOG("===");
+	//test_header(0x430FFBFF);
+	//LOG("===");
+	//test_header(0x44C0FBFF);
 	LOG("================");
-	test_header(0x00A2FBFF);
+	test_file("test.mp3");
 
 	return 0;
 }

@@ -40,24 +40,30 @@ namespace MPEG
 
 	bool IStream::verifyFrameSequence(const unsigned char* f_data, size_t f_size)
 	{
-		static const uint HeaderSequenceLimit = 2;
-
-		for(size_t n = HeaderSequenceLimit, offset = 0;
-			(offset + CHeader::getSize()) <= f_size;
-			--n)
+		static const uint HeadersToVerify = 3;
+		for(size_t nFrames = HeadersToVerify, offset = 0; nFrames; --nFrames)
 		{
+			if(offset + CHeader::getSize() > f_size)
+				return false;
+
 			auto rawHeader = *reinterpret_cast<const uint*>(f_data + offset);
 			if(!CHeader::isValid(rawHeader))
-				break;
+				return false;
 
 			CHeader h(rawHeader);
-			offset += h.getFrameSize();
-
-			if(!n)
-				return true;
+			if(h.isFreeBitrate())
+			{
+				// Try handle a free-bitrate frame
+				auto size = h.calcFrameSize(f_data + offset, f_size - offset);
+				if(!size)
+					return false;
+				offset += size;
+			}
+			else
+				offset += h.getFrameSize();
 		}
 
-		return false;
+		return true;
 	}
 
 
@@ -72,7 +78,8 @@ namespace MPEG
 			return false;
 
 		CHeader header(rawHeader);
-		return (header.getFrameSize() > f_size);
+		// Don't support free-bitrate frames here for now
+		return !header.isFreeBitrate() && (header.getFrameSize() > f_size);
 	}
 
 

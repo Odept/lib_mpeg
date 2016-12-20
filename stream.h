@@ -10,7 +10,7 @@
 class CStream final : public MPEG::IStream
 {
 public:
-						CStream			(const uchar* f_data, uint f_size);
+						CStream			(const uchar* f_data, size_t f_size);
 						CStream			() = delete;
 	bool				hasWarnings		() const final override { return m_warnings; }
 

@@ -5,7 +5,7 @@
 #include "header.h"
 
 
-CStream::CStream(const uchar* f_data, uint f_size):
+CStream::CStream(const uchar* f_data, size_t f_size):
 	m_length(0.0f),
 	m_abr(0),
 	m_vbr(false),
@@ -13,12 +13,8 @@ CStream::CStream(const uchar* f_data, uint f_size):
 {
 	size_t offset = 0;
 
+	ASSERT(f_size >= CHeader::getSize());
 	CHeader first(*reinterpret_cast<const uint*>(f_data));
-	m_version		= first.getVersion();
-	m_layer			= first.getLayer();
-	m_sampling_rate	= first.getSamplingRate();
-	m_channel_mode	= first.getChannelMode();
-	m_emphasis		= first.getEmphasis();
 
 	// Handle Xing-header frame
 	if(auto size = CXingFrame::getSize(f_data, f_size))
@@ -28,7 +24,8 @@ CStream::CStream(const uchar* f_data, uint f_size):
 	}
 
 	// Parse MPEG frames
-	uint br = first.getBitrate();
+	auto firstFrameBitrate = first.getBitrate();
+	uint nFreeBitrateFrames = 0;
 
 	for(size_t next; ; offset += next)
 	{
@@ -42,9 +39,28 @@ CStream::CStream(const uchar* f_data, uint f_size):
 			break;
 
 		CHeader h(rawHeader);
-		ASSERT(h == first);
+		if(h.isFreeBitrate())
+		{
+			next = h.calcFrameSize(f_data + offset, f_size - offset);
+			if(!next)
+			{
+				WARNING("failed to calculate a size of a free-bitrate frame @ relative offset " << offset << " (0x" << OUT_HEX(offset) << ')');
+				break;
+			}
+			++nFreeBitrateFrames;
+		}
+		else
+		{
+			if(first.isFreeBitrate())
+			{
+				first = CHeader(rawHeader);
+				firstFrameBitrate = first.getBitrate();
+			}
+			// Check for non-free-bitrate frames only
+			ASSERT(h == first);
+			next = h.getFrameSize();
+		}
 
-		next = h.getFrameSize();
 		if(offset + next > f_size)
 		{
 			WARNING("unexpected end of MPEG frame @ relative offset " << offset << " (0x" << OUT_HEX(offset) << ')');
@@ -52,13 +68,29 @@ CStream::CStream(const uchar* f_data, uint f_size):
 		}
 		m_frames.push_back( FrameInfo(offset, next, m_length) );
 
-		uint bitrate = h.getBitrate();
 		m_length += h.getFrameLength();
-		m_abr += bitrate / 1000;
-		if(!m_vbr && br != bitrate)
-			m_vbr = true;
+		if(!h.isFreeBitrate())
+		{
+			auto bitrate = h.getBitrate();
+			m_abr += bitrate / 1000;
+			if(!m_vbr && bitrate != firstFrameBitrate)
+				m_vbr = true;
+		}
 	}
-	m_abr /= m_frames.size();
+	ASSERT(m_frames.size() != nFreeBitrateFrames);
+	m_abr /= (m_frames.size() - nFreeBitrateFrames);
+
+	// The assert is not really needed, because the assert above is actually the same
+	ASSERT(!first.isFreeBitrate());
+	// Get values here, where the first non-free-bitrate frame is guaranteed to be found
+	m_version		= first.getVersion();
+	m_layer			= first.getLayer();
+	m_sampling_rate	= first.getSamplingRate();
+	m_channel_mode	= first.getChannelMode();
+	m_emphasis		= first.getEmphasis();
+
+	if(nFreeBitrateFrames)
+		WARNING(nFreeBitrateFrames << " free-bitrate frame" << ((nFreeBitrateFrames > 1) ? "s" : "") << " found");
 
 	// Copy all frame data
 	m_data.resize(offset);

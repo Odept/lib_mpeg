@@ -29,7 +29,8 @@ public:
 	MPEG::Version				getVersion			() const { return static_cast<MPEG::Version>(m_header.Version); }
 	uint						getLayer			() const { return 4 - m_header.Layer; }
 	bool						isProtected			() const { return m_header.isProtected(); }
-	uint						getBitrate			() const;
+	uint						getBitrate			() const { return getBitrate(m_header.Bitrate); }
+	bool						isFreeBitrate		() const { return m_header.isFreeBitrate(); }
 	uint						getSamplingRate		() const;
 	bool						isPadded			() const { return m_header.Padding; }
 	bool						isPrivate			() const { return m_header.Private; }
@@ -39,12 +40,20 @@ public:
 	MPEG::Emphasis				getEmphasis			() const { return static_cast<MPEG::Emphasis>(m_header.Emphasis); }
 
 	// Complex
-	uint						getFrameSize		() const;
+	uint						getFrameSize		() const { ASSERT(!isFreeBitrate()); return getFrameSize(getBitrate()); }
 	float						getFrameLength		() const;
 	uint						getFrameDataOffset	() const { return getSize() + getSideInfoSize(); }
 
+	uint						calcFrameSize		(const uchar* f_data, size_t f_size);
+
 	bool						operator==			(const CHeader& f_header) const { return (m_header == f_header.m_header); }
 	bool						operator!=			(const CHeader& f_header) const { return !(*this == f_header); }
+
+private:
+	uint						getBitrate			(uint f_rawIndex) const;
+	uint						getFrameSize		(uint f_bitrate) const;
+
+	bool						isValidSize			(uint f_size) const;
 
 	// Private methods
 private:
@@ -70,7 +79,6 @@ public:
 	}
 
 public:
-	CXingHeader(const uchar* f_data, size_t f_size);
 	CXingHeader() = delete;
 
 	// Getters
@@ -96,6 +104,10 @@ public:
 			m_modified = true;
 		}
 	}
+
+private:
+	friend class CXingFrame;
+	CXingHeader(const uchar* f_data, size_t f_size);
 
 private:
 	static bool isVBR(uint f_header) { return (f_header == FOUR_CC('X','i','n','g')); }
@@ -140,6 +152,8 @@ public:
 		if(f_size < sizeof(uint))
 			return 0;
 		CHeader header(*reinterpret_cast<const uint*>(f_data));
+		if(header.isFreeBitrate())
+			return 0;
 
 		auto size = header.getFrameSize();
 		auto dataOffset = header.getFrameDataOffset();

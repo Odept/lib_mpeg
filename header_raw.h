@@ -65,7 +65,6 @@ struct Header
 
 		if(Version	== static_cast<uint>(MPEG::Version::vReserved)	||
 		   Layer	== LayerReserved								||
-		   Bitrate	== BitrateFree									||
 		   Bitrate	== BitrateBad									||
 		   Sampling	== SamplingRateReserved							||
 		   Emphasis	== static_cast<uint>(MPEG::Emphasis::Reserved))
@@ -104,6 +103,7 @@ struct Header
 	}
 
 	bool isProtected() const { return !Protection;	}
+	bool isFreeBitrate() const { return (Bitrate == BitrateFree); }
 
 	bool operator==(const Header& f_header) const
 	{
