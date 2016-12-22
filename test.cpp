@@ -75,7 +75,7 @@ void test_file(const char* f_path)
 		auto mpeg = MPEG::IStream::create(&buf[offset], fsize - offset);
 
 		auto uDataOffset = mpeg->getFrameOffset(0);
-		LOG(f_path << std::endl << "================");
+		LOG(f_path << std::endl << "===");
 		LOG("Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : ""));
 		LOG("Frames : " << mpeg->getFrameCount());
 		LOG("Length : " << mpeg->getLength());

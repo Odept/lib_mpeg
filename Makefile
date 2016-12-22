@@ -35,7 +35,7 @@ default: $(TARGET).a
 # Archive
 $(TARGET).a: $(TARGET).o $(STREAM).o $(HEADER).o
 	# Delete an old archive to avoid strange warnings
-	rm $(TARGET).a
+	rm -f $(TARGET).a
 	@echo "#" generate \"$(TARGET)\" archive
 	$(AR) $(ARFLAGS) $(TARGET).a $(HEADER).o $(STREAM).o $(TARGET).o
 
