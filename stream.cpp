@@ -13,15 +13,15 @@ CStream::CStream(const uchar* f_data, size_t f_size):
 {
 	size_t offset = 0;
 
-	ASSERT(f_size >= CHeader::getSize());
-	CHeader first(*reinterpret_cast<const uint*>(f_data));
-
 	// Handle Xing-header frame
 	if(auto size = CXingFrame::getSize(f_data, f_size))
 	{
 		m_xing = std::make_unique<CXingFrame>(f_data, size);
 		offset += size;
 	}
+
+	ASSERT(offset + CHeader::getSize() <= f_size);
+	CHeader first(*reinterpret_cast<const uint*>(f_data + offset));
 
 	// Parse MPEG frames
 	auto firstFrameBitrate = first.getBitrate();
@@ -57,7 +57,7 @@ CStream::CStream(const uchar* f_data, size_t f_size):
 				firstFrameBitrate = first.getBitrate();
 			}
 			// Check for non-free-bitrate frames only
-			ASSERT(h == first);
+			ASSERT_MSG(h == first, "(frame #" + std::to_string(m_frames.size()) + ')');
 			next = h.getFrameSize();
 		}
 
@@ -103,6 +103,8 @@ CStream::CStream(const uchar* f_data, size_t f_size):
 	{
 		auto& h = m_xing->getHeader();
 
+		if(m_xing->getHeader() != first)
+			WARNING("XING: MPEG info differs from the rest of the stream");
 		if((h.isVBR() && !m_vbr) || (!h.isVBR() && m_vbr))
 			WARNING("XING: VBR status mismatch (expected " << h.isVBR() << ", actual " << m_vbr << ')');
 		if(h.getFrameCount() != m_frames.size())

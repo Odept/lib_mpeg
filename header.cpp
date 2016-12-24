@@ -150,6 +150,7 @@ static uint fromBigEndian(const uint* f_pBE)
 }
 
 CXingHeader::CXingHeader(const uchar* f_data, size_t f_size):
+	CHeader(*reinterpret_cast<const uint*>(f_data)),
 	m_vbr(false),
 	m_frames(0),
 	m_bytes(0),
@@ -160,10 +161,9 @@ CXingHeader::CXingHeader(const uchar* f_data, size_t f_size):
 	auto nextFrame = f_data + f_size;
 
 	ASSERT(f_size >= sizeof(uint));
-	CHeader header(*reinterpret_cast<const uint*>(f_data));
-	ASSERT(!header.isFreeBitrate());
+	ASSERT(!isFreeBitrate());
 
-	auto pData = reinterpret_cast<const uint*>(f_data + header.getFrameDataOffset());
+	auto pData = reinterpret_cast<const uint*>(f_data + getFrameDataOffset());
 
 	ASSERT(reinterpret_cast<const uchar*>(pData) + sizeof(uint) <= nextFrame);
 	m_vbr = isVBR(*pData);

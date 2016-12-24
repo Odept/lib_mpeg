@@ -7,7 +7,7 @@
 
 
 // MPEG Header
-class CHeader final
+class CHeader
 {
 public:
 	static bool					isValid				(uint f_header)
@@ -67,7 +67,7 @@ private:
 // Xing Header (Zone A)
 // XING / VBRI header is in the 1-st frame after a side information block (layer 3 only)
 // https://www.codeproject.com/articles/8295/mpeg-audio-frame-header#XINGHeader
-class CXingHeader
+class CXingHeader : public CHeader
 {
 public:
 	static bool isValid(const uchar* f_data, size_t f_size)
