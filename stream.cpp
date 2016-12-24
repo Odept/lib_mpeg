@@ -88,6 +88,9 @@ CStream::CStream(const uchar* f_data, size_t f_size):
 	m_sampling_rate	= first.getSamplingRate();
 	m_channel_mode	= first.getChannelMode();
 	m_emphasis		= first.getEmphasis();
+	//m_bCRC			= first.isProtected();
+	//m_copyrighted	= first.isCopyrighted();
+	//m_original		= first.isOriginal();
 
 	if(nFreeBitrateFrames)
 		WARNING(nFreeBitrateFrames << " free-bitrate frame" << ((nFreeBitrateFrames > 1) ? "s" : "") << " found");

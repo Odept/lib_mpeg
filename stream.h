@@ -25,6 +25,9 @@ public:
 	uint				getSamplingRate	() const final override { return m_sampling_rate;	}
 	MPEG::ChannelMode	getChannelMode	() const final override { return m_channel_mode;	}
 	MPEG::Emphasis		getEmphasis		() const final override { return m_emphasis;		}
+	//bool				isCopyrighted	() const final override { return m_copyrighted;		}
+	//bool				isOriginal		() const final override { return m_original;		}
+	//bool				hasCRC			() const final override { return m_bCRC;			}
 
 	size_t getFrameOffset(uint f_index) const final override
 	{
@@ -66,6 +69,9 @@ private:
 	uint						m_sampling_rate;
 	MPEG::ChannelMode			m_channel_mode;
 	MPEG::Emphasis				m_emphasis;
+	//bool						m_copyrighted;
+	//bool						m_original;
+	//bool						m_bCRC;
 
 	std::unique_ptr<CXingFrame>	m_xing;
 	std::vector<FrameInfo>		m_frames;
