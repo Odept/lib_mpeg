@@ -121,16 +121,17 @@ uint CStream::truncate(uint f_frames)
 	if(!f_frames)
 		return 0;
 
-	uint n = getFrameCount();
-	uint frames = (f_frames <= n) ? (n - f_frames) : 0;
+	auto n = m_frames.size();
+	auto nFramesNew = (f_frames <= n) ? (n - f_frames) : 0;
 
-	m_data.resize( getFrameOffset(frames) );
-
-	frames = n - frames;
-	for(uint i = frames; i; i--)
+	m_data.resize( getFrameOffset(nFramesNew) );
+	// n - number of deleted frames
+	n -= nFramesNew;
+	for(auto i = n; i; --i)
 		m_frames.pop_back();
 
-	return frames;
+	//m_modified = true;
+	return n;
 }
 
 
