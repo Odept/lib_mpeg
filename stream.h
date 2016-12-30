@@ -29,15 +29,15 @@ public:
 	//bool				isOriginal		() const final override { return m_original;		}
 	//bool				hasCRC			() const final override { return m_bCRC;			}
 
-	size_t getFrameOffset(uint f_index) const final override
+	size_t getFrameOffset(unsigned int f_index) const final override
 	{
 		return (f_index < m_frames.size()) ? m_frames[f_index].Offset : m_data.size();
 	}
-	uint getFrameSize(uint f_index) const final override
+	unsigned int getFrameSize(unsigned int f_index) const final override
 	{
 		return (f_index < m_frames.size()) ? m_frames[f_index].Size : 0;
 	}
-	float getFrameTime(uint f_index) const final override
+	float getFrameTime(unsigned int f_index) const final override
 	{
 		return (f_index < m_frames.size()) ? m_frames[f_index].Time : 0.0f;
 	}
@@ -48,15 +48,17 @@ public:
 private:
 	struct FrameInfo
 	{
-		FrameInfo(size_t f_offset, uint f_size, float f_time):
+		FrameInfo(size_t f_offset, uint f_size, float f_time, uint f_dataRelOffset):
 			Offset(f_offset),
 			Size(f_size),
-			Time(f_time)
+			Time(f_time),
+			DataRelOffset(f_dataRelOffset)
 		{}
 
 		size_t	Offset;
 		uint	Size;
 		float	Time;
+		uint	DataRelOffset;
 	};
 
 private:

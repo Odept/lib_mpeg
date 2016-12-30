@@ -1,3 +1,4 @@
+// Add "mode extension" info
 #pragma once
 
 #include "header_raw.h"

@@ -75,8 +75,10 @@ void test_file(const char* f_path)
 		auto mpeg = MPEG::IStream::create(&buf[offset], fsize - offset);
 
 		auto uDataOffset = mpeg->getFrameOffset(0);
+		auto uSize = mpeg->getSize();
 		LOG(f_path << std::endl << "===");
 		LOG("Offset : " << (offset + uDataOffset) << (uDataOffset ? "*" : ""));
+		LOG("Next   : " << (offset + uSize));
 		LOG("Frames : " << mpeg->getFrameCount());
 		LOG("Length : " << mpeg->getLength());
 		LOG("MPEG " << MPEG::IStream::str(mpeg->getVersion()) << " Layer " << mpeg->getLayer());
@@ -93,7 +95,10 @@ void test_file(const char* f_path)
 int main(int, char**)
 {
 	//test_header(0x00A2FBFF);
-	test_header(0x1B00FBFF);
+	//test_header(0x1B00FBFF);
+	test_header(0x6CA2FBFF);
+	LOG("===");
+	test_header(0x6CA0FBFF);
 	//LOG("===");
 	//test_header(0x430FFBFF);
 	//LOG("===");

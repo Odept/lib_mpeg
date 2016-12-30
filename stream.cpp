@@ -66,7 +66,7 @@ CStream::CStream(const uchar* f_data, size_t f_size):
 			WARNING("unexpected end of MPEG frame @ relative offset " << offset << " (0x" << OUT_HEX(offset) << ')');
 			break;
 		}
-		m_frames.push_back( FrameInfo(offset, next, m_length) );
+		m_frames.push_back( FrameInfo(offset, next, m_length, h.getFrameDataOffset()) );
 
 		m_length += h.getFrameLength();
 		if(!h.isFreeBitrate())
