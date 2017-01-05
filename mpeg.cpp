@@ -14,21 +14,21 @@ namespace MPEG
 
 	static size_t findHeader(const unsigned char* f_data, size_t f_size)
 	{
-		size_t i;
-		auto limit = f_size - CHeader::getSize();
+		if(f_size < CHeader::getSize())
+			return f_size;
 
-		for(i = 0; i < limit; i++)
+		for(size_t i = 0, limit = f_size - CHeader::getSize(); i <= limit; ++i)
 		{
 			if(CHeader::isValid( *reinterpret_cast<const uint*>(f_data + i)) )
-				break;
+				return i;
 		}
 
-		return ((i == limit) ? f_size : i);
+		return f_size;
 	}
 
 	size_t IStream::calcFirstHeaderOffset(const uchar* f_data, size_t f_size)
 	{
-		for(size_t offset = 0;; offset++)
+		for(size_t offset = 0; offset < f_size; offset++)
 		{
 			offset += findHeader(f_data + offset, f_size - offset);
 			if( verifyFrameSequence(f_data + offset, f_size - offset) )
