@@ -42,8 +42,14 @@ public:
 		return (f_index < m_frames.size()) ? m_frames[f_index].Time : 0.0f;
 	}
 
+	void				serialize		(std::vector<unsigned char>& f_outStream) final override;
+
 	// Functional
-	uint				truncate		(uint f_frames) final override;
+	unsigned			cut				(unsigned f_frame, unsigned f_count) final override;
+	unsigned			truncate		(unsigned f_frames) final override;
+
+private:
+	size_t	init	(const uchar* f_data, size_t f_offset, size_t f_size, bool f_bFirstInit);
 
 private:
 	struct FrameInfo
